@@ -6,9 +6,12 @@ import { gsap } from 'gsap';
 import { LINKS } from '@/lib/links';
 import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
 
-// Image de fond du hero : burger déconstruit (photo verticale affichée en
-// entier via background-size: contain, sans zoom/recadrage).
-const HERO_IMG = '/hero-burger.png';
+// Image de fond du hero, servie de façon responsive via <picture> :
+//  - mobile  (<= 767px) : hero-mobile.webp  (~800px,  10 KB)
+//  - desktop (>= 768px) : hero-desktop.webp (~1600px, 30 KB)
+// Variantes WebP générées depuis la source 1920×1080 pour économiser la bande passante.
+const HERO_IMG_MOBILE = '/hero-mobile.webp';
+const HERO_IMG_DESKTOP = '/hero-desktop.webp';
 
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -39,11 +42,19 @@ export function Hero() {
 
   return (
     <section className="hero" id="hero">
-      <div
-        className="hero-bg"
-        ref={bgRef}
-        style={{ backgroundImage: `url(${HERO_IMG})` }}
-      ></div>
+      <div className="hero-bg" ref={bgRef}>
+        <picture>
+          {/* Bureau — écrans >= 768px : image haute définition (~1600px) */}
+          <source media="(min-width: 768px)" srcSet={HERO_IMG_DESKTOP} />
+          {/* Mobile — écrans <= 767px : image optimisée (~800px) */}
+          <img
+            src={HERO_IMG_MOBILE}
+            alt="Burger maison O'Snack préparé minute avec des produits frais"
+            className="hero-bg-img"
+            loading="lazy"
+          />
+        </picture>
+      </div>
       <div className="hero-overlay"></div>
 
       <div className="hero-content">

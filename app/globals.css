@@ -242,13 +242,26 @@
     position: absolute;
     inset: 0;
     background-color: #000;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
     transform-origin: center;
     will-change: transform, opacity;
     backface-visibility: hidden;
     z-index: 1;
+  }
+  /* Image de fond responsive : remplit tout le hero (100vh) sans distorsion.
+     height: 100% (et non auto) est nécessaire ici car le hero a une hauteur
+     fixe (100vh) : object-fit: cover garantit le recadrage sans déformation. */
+  .hero-bg picture {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .hero-bg-img {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
   }
   .hero-overlay {
     position: absolute;

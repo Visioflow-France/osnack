@@ -6,8 +6,10 @@ import { LINKS } from '@/lib/links';
 // Barre de navigation flottante (pastille centrée, toujours visible au scroll).
 // Identique sur mobile, tablette et ordinateur : seuls la taille et l'espacement
 // s'adaptent, les liens restent toujours visibles.
+// Sur mobile, le label est raccourci (« Carte ») pour rester lisible sur une
+// seule ligne — voir la media query `.floating-nav` dans globals.css.
 const NAV_ITEMS = [
-  { name: 'La Carte', link: '/carte' },
+  { name: 'Carte', link: '/carte' },
   { name: 'Histoire', link: '/histoire' },
 ];
 

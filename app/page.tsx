@@ -5,8 +5,14 @@ import { Story } from '@/components/Story';
 import { BestSellers } from '@/components/BestSellers';
 import { Reviews } from '@/components/Reviews';
 import { Footer } from '@/components/Footer';
+import { getGoogleReviews } from '@/lib/google-reviews';
 
-export default function Home() {
+// Les avis Google sont récupérés côté serveur et mis en cache (ISR) 1 h.
+export const revalidate = 3600;
+
+export default async function Home() {
+  const reviewsData = await getGoogleReviews();
+
   return (
     <>
       <FloatingNav />
@@ -15,7 +21,7 @@ export default function Home() {
         <Marquee />
         <Story />
         <BestSellers />
-        <Reviews />
+        <Reviews data={reviewsData} />
       </main>
       <Footer />
     </>

@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from './AuthContext';
 import { LINKS } from '@/lib/links';
 
 // Barre de navigation flottante (pastille centrée, toujours visible au scroll).
 // Identique sur mobile, tablette et ordinateur : seuls la taille et l'espacement
 // s'adaptent, les liens restent toujours visibles.
-// Sur mobile, le label est raccourci (« Carte ») pour rester lisible sur une
+// Sur mobile, les labels sont raccourcis (« Carte ») pour rester lisibles sur une
 // seule ligne — voir la media query `.floating-nav` dans globals.css.
 const NAV_ITEMS = [
   { name: 'Carte', link: '/carte' },
@@ -14,6 +15,8 @@ const NAV_ITEMS = [
 ];
 
 export function FloatingNav() {
+  const { user, profile } = useAuth();
+
   return (
     <nav className="floating-nav" id="floating-nav" aria-label="Navigation principale">
       <Link href="/" className="floating-nav-brand" data-cursor-hover>
@@ -28,6 +31,21 @@ export function FloatingNav() {
             </Link>
           </li>
         ))}
+        {/* Fidélité : solde si connecté, sinon simple accès au compte. */}
+        <li>
+          <Link
+            href="/compte"
+            data-cursor-hover
+            className={user ? 'floating-nav-loyalty' : undefined}
+            aria-label={
+              user
+                ? `Mon compte fidélité — ${profile?.points ?? 0} points`
+                : 'Mon compte fidélité'
+            }
+          >
+            {user ? `${profile?.points ?? 0} pts` : 'Compte'}
+          </Link>
+        </li>
       </ul>
 
       <a

@@ -21,6 +21,7 @@ import {
 import { formatPrice } from '@/lib/format';
 import { removeProduct, seedProducts, updateProduct } from '@/lib/products';
 import { ProductForm } from './ProductForm';
+import { LoyaltyAdmin } from './LoyaltyAdmin';
 
 export function AdminApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -138,6 +139,7 @@ function Dashboard({ user }: { user: User }) {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [tab, setTab] = useState<'carte' | 'fidelite'>('carte');
 
   function flash(msg: string) {
     setToast(msg);
@@ -213,22 +215,41 @@ function Dashboard({ user }: { user: User }) {
         </div>
       </header>
 
-      <div className="admin-toolbar">
-        <div>
-          <h1>Gestion de la carte</h1>
-          <p className="admin-sub">Modifications en temps réel — visibles aussitôt sur le site.</p>
-        </div>
-        <div className="admin-toolbar-actions">
-          <button className="admin-btn ghost" onClick={handleSeed}>
-            Importer le menu
-          </button>
-          <button className="admin-btn solid" onClick={() => setCreating(true)}>
-            + Ajouter un plat
-          </button>
-        </div>
+      <div className="admin-tabs">
+        <button
+          className={`admin-tab ${tab === 'carte' ? 'active' : ''}`}
+          onClick={() => setTab('carte')}
+        >
+          Gestion de la carte
+        </button>
+        <button
+          className={`admin-tab ${tab === 'fidelite' ? 'active' : ''}`}
+          onClick={() => setTab('fidelite')}
+        >
+          Fidélité
+        </button>
       </div>
 
-      <div className="admin-stats">
+      {tab === 'fidelite' ? (
+        <LoyaltyAdmin user={user} />
+      ) : (
+        <>
+          <div className="admin-toolbar">
+            <div>
+              <h1>Gestion de la carte</h1>
+              <p className="admin-sub">Modifications en temps réel — visibles aussitôt sur le site.</p>
+            </div>
+            <div className="admin-toolbar-actions">
+              <button className="admin-btn ghost" onClick={handleSeed}>
+                Importer le menu
+              </button>
+              <button className="admin-btn solid" onClick={() => setCreating(true)}>
+                + Ajouter un plat
+              </button>
+            </div>
+          </div>
+
+          <div className="admin-stats">
         <Stat label="Plats" value={products.length} />
         <Stat label="Best sellers" value={bestCount} />
         <Stat label="En promotion" value={promoCount} />
@@ -329,6 +350,8 @@ function Dashboard({ user }: { user: User }) {
           initial={editing}
           onClose={() => setEditing(null)}
         />
+      )}
+      </>
       )}
 
       {toast && <div className="admin-toast">{toast}</div>}

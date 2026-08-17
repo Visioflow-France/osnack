@@ -26,23 +26,26 @@ export interface GoogleReviewsData {
   reviews: GoogleReview[];
 }
 
-// Type partiel de la réponse Places API (champs demandés via le field mask).
+// Type partiel de la réponse Place Details (ancienne API, plus fiable pour les avis).
+interface PlacesResponse {
+  status?: string;
+  error_message?: string;
+  result?: PlacesPlace;
+}
 interface PlacesPlace {
-  displayName?: { text?: string };
+  name?: string;
   rating?: number;
-  userRatingCount?: number;
+  user_ratings_total?: number;
+  url?: string;
   reviews?: PlacesReview[];
 }
 interface PlacesReview {
-  name?: string;
-  relativePublishTimeDescription?: string;
+  author_name?: string;
   rating?: number;
-  text?: { text?: string };
-  authorAttribution?: {
-    displayName?: string;
-    uri?: string;
-    photoUri?: string;
-  };
+  text?: string;
+  relative_time_description?: string;
+  author_url?: string;
+  profile_photo_url?: string;
 }
 
 const PLACE_ID = process.env.GOOGLE_PLACES_PLACE_ID;
@@ -54,7 +57,8 @@ export function isGoogleReviewsConfigured(): boolean {
 }
 
 /**
- * Récupère les avis Google.
+ * Récupère les avis Google via l'ancienne API Place Details (plus fiable pour
+ * obtenir les avis que Places API v1, qui renvoie souvent un tableau vide).
  * @returns les données formatées, ou `null` si non configuré / erreur réseau.
  *          Le composant affiche alors un état de secours honnête (jamais d'avis
  *          inventés).
@@ -63,41 +67,51 @@ export async function getGoogleReviews(): Promise<GoogleReviewsData | null> {
   if (!PLACE_ID || !API_KEY) return null;
 
   try {
-    const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(PLACE_ID)}`;
-    const res = await fetch(url, {
-      next: { revalidate: 3600 }, // cache 1 h (ISR)
-      headers: {
-        'X-Goog-Api-Key': API_KEY,
-        'X-Goog-FieldMask':
-          'displayName,rating,userRatingCount,reviews(relativePublishTimeDescription,rating,text,authorAttribution)',
-        'Accept-Language': 'fr',
-      },
-    });
+    const url =
+      `https://maps.googleapis.com/maps/api/place/details/json` +
+      `?place_id=${encodeURIComponent(PLACE_ID)}` +
+      `&key=${encodeURIComponent(API_KEY)}` +
+      `&language=fr&reviews_sort=newest`;
+
+    const res = await fetch(url, { next: { revalidate: 3600 } }); // cache 1 h (ISR)
 
     if (!res.ok) {
-      console.warn(`[google-reviews] Places API a répondu ${res.status} ${res.statusText}`);
+      console.warn(`[google-reviews] Place Details a répondu ${res.status} ${res.statusText}`);
       return null;
     }
 
-    const data = (await res.json()) as PlacesPlace;
+    const payload = (await res.json()) as PlacesResponse;
+
+    if (payload.status !== 'OK') {
+      console.warn(
+        `[google-reviews] statut API "${payload.status}"` +
+          (payload.error_message ? ` — ${payload.error_message}` : ''),
+      );
+      return null;
+    }
+
+    const data = payload.result;
+    if (!data) return null;
 
     const reviews: GoogleReview[] = (data.reviews ?? [])
-      .filter((r) => r?.text?.text)
+      .filter((r) => r?.text)
       .map((r, i) => ({
-        id: r.name ?? `gr-${i}`,
-        name: r.authorAttribution?.displayName ?? 'Client Google',
-        date: r.relativePublishTimeDescription ?? '',
+        id: `${PLACE_ID}-${i}`,
+        name: r.author_name ?? 'Client Google',
+        date: r.relative_time_description ?? '',
         rating: typeof r.rating === 'number' ? r.rating : 0,
-        text: r.text?.text ?? '',
-        authorUri: r.authorAttribution?.uri,
-        photoUri: r.authorAttribution?.photoUri,
+        text: r.text ?? '',
+        authorUri: r.author_url,
+        photoUri: r.profile_photo_url,
       }));
 
     return {
-      displayName: data.displayName?.text ?? "O'Snack",
+      displayName: data.name ?? "O'Snack",
       rating: typeof data.rating === 'number' ? data.rating : 0,
-      total: typeof data.userRatingCount === 'number' ? data.userRatingCount : 0,
-      url: `https://search.google.com/local/reviews?placeid=${encodeURIComponent(PLACE_ID)}`,
+      total: typeof data.user_ratings_total === 'number' ? data.user_ratings_total : 0,
+      url:
+        data.url ??
+        `https://search.google.com/local/reviews?placeid=${encodeURIComponent(PLACE_ID)}`,
       reviews,
     };
   } catch (err) {

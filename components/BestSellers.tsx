@@ -11,9 +11,10 @@ import { MenuCard } from './Menu';
  * Section "Best Sellers" affichée sur la page vitrine. Ne montre que 3 plats
  * (choisis via le toggle "Best Seller" de l'admin, avec fallback robuste).
  * La carte complète vit sur la page dédiée /carte.
+ * Menu fourni par le serveur (props) — aucune lecture Firestore côté client.
  */
-export function BestSellers() {
-  const { products } = useProducts();
+export function BestSellers({ initialProducts }: { initialProducts?: Product[] }) {
+  const { products } = useProducts(initialProducts);
 
   const visible = useMemo(() => products.filter(isAvailable), [products]);
   const featured = useMemo<Product[]>(

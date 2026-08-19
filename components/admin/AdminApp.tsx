@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -8,6 +8,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { isStaffUser } from '@/lib/staff';
 import { useProducts } from '@/lib/useProducts';
 import {
   CATEGORY_LABELS,
@@ -19,11 +20,20 @@ import {
   type Product,
 } from '@/lib/menu';
 import { formatPrice } from '@/lib/format';
-import { removeProduct, seedProducts, updateProduct } from '@/lib/products';
+import {
+  removeProduct,
+  seedProducts,
+  subscribeToOrders,
+  updateOrderStatus,
+  updateProduct,
+  type Order,
+} from '@/lib/products';
 import { ProductForm } from './ProductForm';
+import { OrderForm } from './OrderForm';
 
 export function AdminApp() {
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -34,13 +44,38 @@ export function AdminApp() {
     return onAuthStateChanged(auth, (u) => {
       setUser(u);
       setReady(true);
+      // Admin unique : l'UID est comparé localement (les règles Firestore
+      // appliquent la même contrainte côté sécurité).
+      setIsAdmin(u ? isStaffUser(u.uid) : null);
     });
   }, []);
 
   if (!isFirebaseConfigured) return <NotConfigured />;
   if (!ready) return <Splash text="Connexion…" />;
   if (!user) return <Login />;
+  if (isAdmin === null) return <Splash text="Vérification des droits…" />;
+  if (!isAdmin) return <NotStaff email={user.email ?? ''} />;
   return <Dashboard user={user} />;
+}
+
+/* ------------------------------ Accès refusé ------------------------------ */
+
+function NotStaff({ email }: { email: string }) {
+  return (
+    <Shell>
+      <div className="admin-card center">
+        <h1>Accès réservé à l&apos;administration</h1>
+        <p>
+          Le compte <strong>{email}</strong> est un compte client (fidélité) :
+          il n&apos;a pas accès au dashboard. Ton espace se trouve sur la page
+          Mon compte.
+        </p>
+        <a className="admin-btn solid" href="/compte">
+          Aller à mon espace client
+        </a>
+      </div>
+    </Shell>
+  );
 }
 
 /* ----------------------------- Not configured ---------------------------- */
@@ -133,10 +168,15 @@ function Login() {
 
 /* ------------------------------- Dashboard ------------------------------- */
 
+type Tab = 'carte' | 'commandes';
+
 function Dashboard({ user }: { user: User }) {
+  // Menu admin : chargé UNE fois via /api/menu (cache ISR) — pas de boucle.
   const { products } = useProducts();
+  const [tab, setTab] = useState<Tab>('carte');
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
+  const [ordering, setOrdering] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   function flash(msg: string) {
@@ -147,7 +187,7 @@ function Dashboard({ user }: { user: User }) {
   async function handleDelete(p: Product) {
     if (!window.confirm(`Supprimer définitivement « ${p.name} » ?`)) return;
     try {
-      await removeProduct(p.id);
+      await removeProduct(p); // supprime le plat + son image Storage
       flash(`${p.name} supprimé.`);
     } catch (err) {
       console.error(err);
@@ -215,27 +255,61 @@ function Dashboard({ user }: { user: User }) {
 
       <div className="admin-toolbar">
         <div>
-          <h1>Gestion de la carte</h1>
-          <p className="admin-sub">Modifications en temps réel — visibles aussitôt sur le site.</p>
+          <h1>{tab === 'carte' ? 'Gestion de la carte' : 'Commandes'}</h1>
+          <p className="admin-sub">
+            {tab === 'carte'
+              ? 'Modifications visibles sur le site sous 5 min (cache).'
+              : 'Écoute temps réel — la seule connexion Firestore permanente.'}
+          </p>
         </div>
         <div className="admin-toolbar-actions">
-          <button className="admin-btn ghost" onClick={handleSeed}>
-            Importer le menu
+          <button
+            className={`admin-btn ${tab === 'carte' ? 'solid' : 'ghost'}`}
+            onClick={() => setTab('carte')}
+          >
+            Carte
           </button>
-          <button className="admin-btn solid" onClick={() => setCreating(true)}>
-            + Ajouter un plat
+          <button
+            className={`admin-btn ${tab === 'commandes' ? 'solid' : 'ghost'}`}
+            onClick={() => setTab('commandes')}
+          >
+            Commandes
           </button>
+          {tab === 'carte' && (
+            <>
+              <button className="admin-btn ghost" onClick={handleSeed}>
+                Importer le menu
+              </button>
+              <button className="admin-btn solid" onClick={() => setCreating(true)}>
+                + Ajouter un plat
+              </button>
+            </>
+          )}
+          {tab === 'commandes' && (
+            <button className="admin-btn solid" onClick={() => setOrdering(true)}>
+              + Nouvelle commande
+            </button>
+          )}
         </div>
       </div>
 
       <div className="admin-stats">
-        <Stat label="Plats" value={products.length} />
-        <Stat label="Best sellers" value={bestCount} />
-        <Stat label="En promotion" value={promoCount} />
-        <Stat label="Masqués" value={hiddenCount} />
+        {tab === 'carte' ? (
+          <>
+            <Stat label="Plats" value={products.length} />
+            <Stat label="Best sellers" value={bestCount} />
+            <Stat label="En promotion" value={promoCount} />
+            <Stat label="Masqués" value={hiddenCount} />
+          </>
+        ) : (
+          <OrdersLive />
+        )}
       </div>
 
       <div className="admin-table-wrap">
+        {tab === 'commandes' ? (
+          <OrdersTable />
+        ) : (
         <table className="admin-table">
           <thead>
             <tr>
@@ -321,9 +395,17 @@ function Dashboard({ user }: { user: User }) {
             )}
           </tbody>
         </table>
+        )}
       </div>
 
       {creating && <ProductForm onClose={() => setCreating(false)} />}
+      {ordering && (
+        <OrderForm
+          products={products}
+          onClose={() => setOrdering(false)}
+          onSaved={flash}
+        />
+      )}
       {editing && (
         <ProductForm
           initial={editing}
@@ -337,6 +419,126 @@ function Dashboard({ user }: { user: User }) {
 }
 
 /* ------------------------------- subcomponents ------------------------------ */
+
+/**
+ * Écoute temps réel des commandes — LA SEULE de toute l'application
+ * (onSnapshot sur la collection 'orders', réservée au dashboard cuisine).
+ */
+function useOrders() {
+  const [orders, setOrders] = useState<Order[] | null>(null);
+
+  useEffect(() => {
+    return subscribeToOrders(setOrders);
+  }, []);
+
+  return orders;
+}
+
+function OrdersLive() {
+  const orders = useOrders();
+  if (!orders) return <Stat label="Commandes" value={0} />;
+  const active = orders.filter((o) => o.status !== 'livree' && o.status !== 'annulee');
+  return (
+    <>
+      <Stat label="Commandes actives" value={active.length} />
+      <Stat label="Nouvelles" value={orders.filter((o) => o.status === 'nouvelle').length} />
+      <Stat label="En cours" value={orders.filter((o) => o.status === 'en_cours').length} />
+      <Stat label="Total" value={orders.length} />
+    </>
+  );
+}
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  nouvelle: 'Nouvelle',
+  en_cours: 'En cours',
+  prete: 'Prête',
+  livree: 'Livrée',
+  annulee: 'Annulée',
+};
+
+function OrdersTable() {
+  const orders = useOrders();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function setStatus(id: string, status: Order['status']) {
+    setBusy(id);
+    try {
+      await updateOrderStatus(id, status);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  if (!orders) {
+    return <div className="admin-empty">Connexion à Firestore…</div>;
+  }
+  if (orders.length === 0) {
+    return (
+      <div className="admin-empty">
+        Aucune commande pour le moment. Les commandes apparaissent ici en temps réel.
+      </div>
+    );
+  }
+
+  return (
+    <table className="admin-table">
+      <thead>
+        <tr>
+          <th>Réf</th>
+          <th>Client</th>
+          <th>Articles</th>
+          <th>Total</th>
+          <th>Heure</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.map((o) => (
+          <tr key={o.id} className={o.status === 'livree' ? 'is-hidden' : ''}>
+            <td className="cell-price">{o.reference ?? o.id.slice(0, 8)}</td>
+            <td>
+              <strong>{o.customerName ?? '—'}</strong>
+              {o.customerPhone && <small> {o.customerPhone}</small>}
+            </td>
+            <td>
+              {(o.items ?? [])
+                .map((it) => `${it.qty}× ${it.name}`)
+                .join(', ') || '—'}
+            </td>
+            <td className="cell-price">{formatPrice(o.total ?? 0)}</td>
+            <td className="cell-price">
+              {o.createdAt ? new Date(o.createdAt).toLocaleTimeString('fr-FR') : '—'}
+            </td>
+            <td>
+              <span className={`admin-pill ${o.status === 'nouvelle' ? 'on' : 'off'}`}>
+                {ORDER_STATUS_LABELS[o.status] ?? o.status}
+              </span>
+            </td>
+            <td className="cell-actions">
+              <button
+                className="admin-btn ghost sm"
+                disabled={busy === o.id}
+                onClick={() => setStatus(o.id, o.status === 'nouvelle' ? 'en_cours' : 'prete')}
+              >
+                {o.status === 'nouvelle' ? 'Préparer' : 'Prête'}
+              </button>
+              <button
+                className="admin-btn danger sm"
+                disabled={busy === o.id}
+                onClick={() => setStatus(o.id, 'livree')}
+              >
+                Livrée
+              </button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (

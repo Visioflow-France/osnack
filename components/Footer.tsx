@@ -110,6 +110,7 @@ export function Footer() {
             <li><Link href="/histoire" data-cursor-hover>Histoire</Link></li>
             <li><Link href="/#reviews" data-cursor-hover>Avis Clients</Link></li>
             <li><Link href="/#contact" data-cursor-hover>Nous Trouver</Link></li>
+            <li><Link href="/compte" data-cursor-hover>Mon compte fidélité</Link></li>
           </ul>
         </div>
       </div>

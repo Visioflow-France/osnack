@@ -22,9 +22,10 @@ import { Reveal } from './Reveal';
 
 type Filter = Category | 'all';
 
-export function Menu() {
+export function Menu({ initialProducts }: { initialProducts?: Product[] }) {
   const [filter, setFilter] = useState<Filter>('all');
-  const { products } = useProducts();
+  // Menu chargé une seule fois (props serveur ISR) — aucun polling Firestore.
+  const { products } = useProducts(initialProducts);
 
   // Hide dishes the admin has toggled off (soft remove). Deletion is permanent.
   const visible = useMemo(() => products.filter(isAvailable), [products]);

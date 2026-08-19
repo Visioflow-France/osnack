@@ -136,6 +136,17 @@ export function Footer() {
           <Link href="/cookies" data-cursor-hover>Cookies</Link>
         </div>
       </div>
+
+      <div className="footer-credit">
+        <a
+          href="https://visioflow.fr"
+          target="_blank"
+          rel="noreferrer"
+          data-cursor-hover
+        >
+          Site réalisé par <strong>visioflow.fr</strong>
+        </a>
+      </div>
     </footer>
   );
 }

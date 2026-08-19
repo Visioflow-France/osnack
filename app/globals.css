@@ -1850,6 +1850,24 @@
   }
   .footer-bottom a:hover { color: #fff; }
 
+  .footer-credit {
+    max-width: 1400px;
+    margin: 1.2rem auto 0;
+    padding-bottom: 1.5rem;
+    text-align: center;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.7rem;
+    color: var(--text-mute);
+    letter-spacing: 0.08em;
+  }
+  .footer-credit a {
+    color: var(--text-mute);
+    text-decoration: none;
+    transition: color .3s var(--ease-quiet);
+  }
+  .footer-credit a:hover { color: #fff; }
+  .footer-credit strong { color: inherit; font-weight: 500; }
+
   .footer-huge {
     font-family: var(--font-montserrat), sans-serif;
     font-weight: 900;

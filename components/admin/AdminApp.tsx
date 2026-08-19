@@ -30,6 +30,7 @@ import {
 } from '@/lib/products';
 import { ProductForm } from './ProductForm';
 import { OrderForm } from './OrderForm';
+import { LoyaltyAdmin } from './LoyaltyAdmin';
 
 export function AdminApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -168,7 +169,7 @@ function Login() {
 
 /* ------------------------------- Dashboard ------------------------------- */
 
-type Tab = 'carte' | 'commandes';
+type Tab = 'carte' | 'commandes' | 'fidelite';
 
 function Dashboard({ user }: { user: User }) {
   // Menu admin : chargé UNE fois via /api/menu (cache ISR) — pas de boucle.
@@ -253,64 +254,77 @@ function Dashboard({ user }: { user: User }) {
         </div>
       </header>
 
-      <div className="admin-toolbar">
-        <div>
-          <h1>{tab === 'carte' ? 'Gestion de la carte' : 'Commandes'}</h1>
-          <p className="admin-sub">
-            {tab === 'carte'
-              ? 'Modifications visibles sur le site sous 5 min (cache).'
-              : 'Écoute temps réel — la seule connexion Firestore permanente.'}
-          </p>
-        </div>
-        <div className="admin-toolbar-actions">
-          <button
-            className={`admin-btn ${tab === 'carte' ? 'solid' : 'ghost'}`}
-            onClick={() => setTab('carte')}
-          >
-            Carte
-          </button>
-          <button
-            className={`admin-btn ${tab === 'commandes' ? 'solid' : 'ghost'}`}
-            onClick={() => setTab('commandes')}
-          >
-            Commandes
-          </button>
-          {tab === 'carte' && (
-            <>
-              <button className="admin-btn ghost" onClick={handleSeed}>
-                Importer le menu
-              </button>
-              <button className="admin-btn solid" onClick={() => setCreating(true)}>
-                + Ajouter un plat
-              </button>
-            </>
-          )}
-          {tab === 'commandes' && (
-            <button className="admin-btn solid" onClick={() => setOrdering(true)}>
-              + Nouvelle commande
-            </button>
-          )}
-        </div>
+      <div className="admin-tabs">
+        <button
+          className={`admin-tab ${tab === 'carte' ? 'active' : ''}`}
+          onClick={() => setTab('carte')}
+        >
+          Gestion de la carte
+        </button>
+        <button
+          className={`admin-tab ${tab === 'commandes' ? 'active' : ''}`}
+          onClick={() => setTab('commandes')}
+        >
+          Commandes
+        </button>
+        <button
+          className={`admin-tab ${tab === 'fidelite' ? 'active' : ''}`}
+          onClick={() => setTab('fidelite')}
+        >
+          Fidélité
+        </button>
       </div>
 
-      <div className="admin-stats">
-        {tab === 'carte' ? (
-          <>
-            <Stat label="Plats" value={products.length} />
-            <Stat label="Best sellers" value={bestCount} />
-            <Stat label="En promotion" value={promoCount} />
-            <Stat label="Masqués" value={hiddenCount} />
-          </>
-        ) : (
-          <OrdersLive />
-        )}
-      </div>
+      {tab === 'fidelite' ? (
+        <LoyaltyAdmin user={user} />
+      ) : (
+        <>
+          <div className="admin-toolbar">
+            <div>
+              <h1>{tab === 'carte' ? 'Gestion de la carte' : 'Commandes'}</h1>
+              <p className="admin-sub">
+                {tab === 'carte'
+                  ? 'Modifications visibles sur le site sous 5 min (cache).'
+                  : 'Écoute temps réel — la seule connexion Firestore permanente.'}
+              </p>
+            </div>
+            <div className="admin-toolbar-actions">
+              {tab === 'carte' && (
+                <>
+                  <button className="admin-btn ghost" onClick={handleSeed}>
+                    Importer le menu
+                  </button>
+                  <button className="admin-btn solid" onClick={() => setCreating(true)}>
+                    + Ajouter un plat
+                  </button>
+                </>
+              )}
+              {tab === 'commandes' && (
+                <button className="admin-btn solid" onClick={() => setOrdering(true)}>
+                  + Nouvelle commande
+                </button>
+              )}
+            </div>
+          </div>
 
-      <div className="admin-table-wrap">
-        {tab === 'commandes' ? (
-          <OrdersTable />
-        ) : (
-        <table className="admin-table">
+          <div className="admin-stats">
+            {tab === 'carte' ? (
+              <>
+                <Stat label="Plats" value={products.length} />
+                <Stat label="Best sellers" value={bestCount} />
+                <Stat label="En promotion" value={promoCount} />
+                <Stat label="Masqués" value={hiddenCount} />
+              </>
+            ) : (
+              <OrdersLive />
+            )}
+          </div>
+
+          <div className="admin-table-wrap">
+            {tab === 'commandes' ? (
+              <OrdersTable />
+            ) : (
+              <table className="admin-table">
           <thead>
             <tr>
               <th>Plat</th>
@@ -394,9 +408,11 @@ function Dashboard({ user }: { user: User }) {
               </tr>
             )}
           </tbody>
-        </table>
-        )}
-      </div>
+              </table>
+            )}
+          </div>
+        </>
+      )}
 
       {creating && <ProductForm onClose={() => setCreating(false)} />}
       {ordering && (

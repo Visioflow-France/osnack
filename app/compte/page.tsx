@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
 import { FloatingNav } from '@/components/FloatingNav';
+import { AccountApp } from '@/components/AccountApp';
 import { Footer } from '@/components/Footer';
-import { AccountApp } from '@/components/account/AccountApp';
 
 export const metadata: Metadata = {
   title: "Mon compte fidélité — O'Snack Torcy",
   description:
-    "Connecte-toi à ton espace client O'Snack pour suivre tes points de fidélité et leurs remises.",
-  robots: { index: false, follow: false },
+    "Consultez vos points fidélité O'Snack, échangez-les contre des cadeaux de la carte et suivez vos paliers.",
 };
 
 export default function ComptePage() {

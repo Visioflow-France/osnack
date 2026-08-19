@@ -1,309 +1,262 @@
 import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
-  type User,
-} from 'firebase/auth';
-import {
+  collection,
   doc,
-  getDoc,
   onSnapshot,
+  query,
+  runTransaction,
   setDoc,
-  updateDoc,
 } from 'firebase/firestore';
-import { auth, db, isFirebaseConfigured } from './firebase';
+import { db, isFirebaseConfigured } from './firebase';
+import { MENU, type Product } from './menu';
 
 /**
- * ── Espace client & fidélité ─────────────────────────────────────────────────
+ * Programme de fidélité O'Snack.
  *
- * Comptes clients Firebase Auth (email + mot de passe). Le solde de points et
- * l'historique vivent dans Firestore, un document par client :
- *
- *   customers/{uid}  { points, lifetime, createdAt, updatedAt }
- *   customers/{uid}/history/{entryId}  { delta, reason, createdAt }
- *
- * Coût forfait Spark : l'écoute du profil utilise onSnapshot ciblé sur UN
- * document (les snapshots de document ne comptent des lectures qu'au moment
- * où le contenu change réellement — usage anecdotique pour un compte ouvert
- * par son propriétaire). Aucun polling, aucune requête en boucle.
+ * Barème : 1 € dépensé = 1 point. Les commandes passant par téléphone /
+ * sur place / plateformes, les points ne peuvent pas être crédités
+ * automatiquement — le restaurant génère un code depuis l'admin, le client
+ * le saisit dans son compte. Les cadeaux se déboursent par paliers de
+ * points sur les articles de la carte.
  */
 
-/** Collection des profils clients (1 document par compte). */
-export const CUSTOMERS_COLLECTION = 'customers';
-/** Sous-collection de l'historique des points. */
-export const HISTORY_COLLECTION = 'history';
+/** Collection Firestore du profil fidélité de chaque client. */
+export const USERS_COLLECTION = 'loyalty_users';
+/** Collection Firestore des codes générés par le restaurant. */
+export const CODES_COLLECTION = 'loyalty_codes';
 
-/** Points nécessaires pour 1 euro de remise. */
-export const POINTS_PER_EURO = 10;
+/** 1 € dépensé = 1 point (arrondi à l'entier inférieur). */
+export function pointsForAmount(amountEur: number): number {
+  return Math.max(0, Math.floor(amountEur));
+}
 
-export interface CustomerProfile {
+/** Paliers de cadeaux : seuil en points → article de la carte offert. */
+export interface GiftTier {
+  threshold: number;
+  label: string;
+  /** id de l'article dans la carte (products / MENU). */
+  productId: string;
+}
+
+export const GIFT_TIERS: GiftTier[] = [
+  { threshold: 50, label: 'Boisson offerte', productId: 'boisson-33' },
+  { threshold: 100, label: 'Dessert offert', productId: 'd-tiramisu' },
+  { threshold: 150, label: 'Sandwich offert', productId: 'grec' },
+  { threshold: 250, label: 'Menu offert', productId: 'menu-supreme' },
+];
+
+/** Profil fidélité d'un client (doc Firestore, hors identité Firebase Auth). */
+export interface LoyaltyProfile {
   points: number;
-  /** Total cumulé depuis l'inscription (jamais décrémenté). */
-  lifetime: number;
-  displayName?: string;
-  /** Email dénormalisé pour la recherche comptoir (minuscules). */
-  email?: string;
+  /** Points déjà dépensés sur des cadeaux (historique cumulé). */
+  spent: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+/** Code de fidélité remis au client après une commande. */
+export interface LoyaltyCode {
+  /** Le code lui-même (ex. OS-4F7B2K), utilisé comme id Firestore. */
+  code: string;
+  /** Points crédités une fois le code saisi. */
+  points: number;
+  /** Montant de la commande en € (1 € = 1 pt), stocké pour mémoire. */
+  amountEur?: number;
+  /** Statut : disponible, déjà utilisé, ou annulé par le restaurant. */
+  status: 'available' | 'redeemed' | 'cancelled';
+  /** uid Firebase Auth du client qui a utilisé le code. */
+  redeemedBy?: string;
+  redeemedAt?: number;
   createdAt: number;
-  updatedAt: number;
+  createdBy?: string;
 }
 
-export interface PointsEntry {
-  id: string;
-  /** Positif = gain, négatif = utilisation. */
-  delta: number;
-  reason: string;
-  createdAt: number;
-}
-
-export const isAuthAvailable = () =>
-  isFirebaseConfigured && Boolean(auth && db);
-
-/* ------------------------------ Authentification ----------------------------- */
-
-export async function registerCustomer(
-  email: string,
-  password: string,
-  displayName?: string,
-): Promise<User> {
-  if (!auth || !db) throw new Error('Firebase non configuré');
-  const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-  if (displayName?.trim()) {
-    await updateProfile(cred.user, { displayName: displayName.trim() });
+/** Génère un code lisible type OS-XXXXXX (sans caractères ambigus). */
+export function generateCode(): string {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let body = '';
+  const cryptoObj = typeof crypto !== 'undefined' ? crypto : undefined;
+  if (cryptoObj?.getRandomValues) {
+    const bytes = new Uint8Array(6);
+    cryptoObj.getRandomValues(bytes);
+    for (const b of bytes) body += alphabet[b % alphabet.length];
+  } else {
+    for (let i = 0; i < 6; i++)
+      body += alphabet[Math.floor(Math.random() * alphabet.length)];
   }
-  // Document profil initial : 0 point, historique vide.
-  await setDoc(doc(db, CUSTOMERS_COLLECTION, cred.user.uid), {
-    points: 0,
-    lifetime: 0,
-    email: email.trim().toLowerCase(),
-    ...(displayName?.trim() ? { displayName: displayName.trim() } : {}),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
-  return cred.user;
+  return `OS-${body}`;
 }
 
-export async function loginCustomer(
-  email: string,
-  password: string,
-): Promise<User> {
-  if (!auth) throw new Error('Firebase non configuré');
-  const cred = await signInWithEmailAndPassword(auth, email.trim(), password);
-  return cred.user;
-}
-
-export async function logoutCustomer(): Promise<void> {
-  if (!auth) return;
-  await signOut(auth);
-}
-
-export async function resetCustomerPassword(email: string): Promise<void> {
-  if (!auth) throw new Error('Firebase non configuré');
-  await sendPasswordResetEmail(auth, email.trim());
-}
-
-/** Observer d'état de connexion (une seule instance par page /compte). */
-export function watchAuth(cb: (user: User | null) => void): () => void {
-  if (!auth) {
-    cb(null);
-    return () => {};
-  }
-  return onAuthStateChanged(auth, cb);
-}
-
-/* ---------------------------------- Points ---------------------------------- */
-
-/**
- * Crée le profil s'il manque (client Auth existant avant le déploiement
- * fidélité) — évite d'afficher « introuvable » à un ancien compte.
- */
-async function ensureProfile(uid: string): Promise<CustomerProfile> {
-  if (!db) throw new Error('Firebase non configuré');
-  const ref = doc(db, CUSTOMERS_COLLECTION, uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return snap.data() as CustomerProfile;
-  const profile: CustomerProfile = {
-    points: 0,
-    lifetime: 0,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-  await setDoc(ref, profile);
-  return profile;
+/** Référence du profil d'un client. */
+export function loyaltyDocRef(uid: string) {
+  return doc(db!, USERS_COLLECTION, uid);
 }
 
 /**
- * Écoute du profil client (1 document). Réservé à l'espace compte ouvert par
- * son propriétaire — pas de boucle, déconnexion = unsubscribe.
+ * Assure la présence du profil (points: 0) à la première connexion,
+ * puis le souscrit en temps réel. Retourne la fonction de désinscription.
  */
-export function watchProfile(
+export function subscribeLoyalty(
   uid: string,
-  cb: (profile: CustomerProfile | null) => void,
+  cb: (profile: LoyaltyProfile | null) => void,
 ): () => void {
-  if (!db) {
+  if (!isFirebaseConfigured || !db) {
     cb(null);
     return () => {};
   }
+  const ref = loyaltyDocRef(uid);
   return onSnapshot(
-    doc(db, CUSTOMERS_COLLECTION, uid),
+    ref,
     (snap) => {
-      if (!snap.exists()) {
-        // Profil manquant : le créer puis re-notifier à la prochaine écriture.
-        ensureProfile(uid)
-          .then(cb)
-          .catch((err) => console.warn('[loyalty] init profil :', err));
-        cb({ points: 0, lifetime: 0, createdAt: 0, updatedAt: 0 });
-        return;
+      if (snap.exists()) {
+        cb(snap.data() as LoyaltyProfile);
+      } else {
+        // Première connexion : création du profil avec 0 point.
+        setDoc(ref, { points: 0, spent: 0, createdAt: Date.now() }).catch(() => {});
+        cb({ points: 0, spent: 0 });
       }
-      cb(snap.data() as CustomerProfile);
     },
     (err) => {
-      console.warn('[loyalty] écoute profil :', err);
+      console.error('[loyalty] subscribe failed:', err);
       cb(null);
     },
   );
 }
 
-/**
- * Écrit un mouvement de points + met à jour le solde (transaction logique en
- * 2 écritures). `delta` positif pour un gain, négatif pour une utilisation.
- * Côté admin/comptoir : crédite lors d'une commande enregistrée.
- */
-export async function addPoints(
-  uid: string,
-  delta: number,
-  reason: string,
-): Promise<void> {
+/** Crée un code côté restaurant (admin). */
+export async function createLoyaltyCode(
+  points: number,
+  opts?: { amountEur?: number; createdBy?: string },
+): Promise<string> {
   if (!db) throw new Error('Firebase non configuré');
-  const profile = await ensureProfile(uid);
-  const points = Math.max(0, profile.points + delta);
-  const lifetime =
-    delta > 0 ? profile.lifetime + delta : profile.lifetime;
-  await setDoc(doc(db, CUSTOMERS_COLLECTION, uid), {
-    ...profile,
+  const code = generateCode();
+  await setDoc(doc(db, CODES_COLLECTION, code), {
+    code,
     points,
-    lifetime,
-    updatedAt: Date.now(),
-  });
-  await setDoc(
-    doc(db, CUSTOMERS_COLLECTION, uid, HISTORY_COLLECTION, `e-${Date.now()}`),
-    { delta, reason, createdAt: Date.now() },
-  );
-}
-
-/**
- * Utilise des points (débit). Rejette si le solde est insuffisant.
- * @returns le nouveau solde.
- */
-export async function spendPoints(
-  uid: string,
-  amount: number,
-  reason: string,
-): Promise<number> {
-  if (amount <= 0) throw new Error('Montant invalide');
-  const profile = await ensureProfile(uid);
-  if (profile.points < amount) throw new Error('Solde de points insuffisant');
-  await addPoints(uid, -amount, reason);
-  return profile.points - amount;
-}
-
-/**
- * Historique des 20 derniers mouvements (lecture ponctuelle, à la demande —
- * affiché à l'ouverture de l'espace compte uniquement).
- */
-export async function getHistory(uid: string, limitCount = 20): Promise<PointsEntry[]> {
-  if (!db) return [];
-  const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
-  const q = query(
-    collection(db, CUSTOMERS_COLLECTION, uid, HISTORY_COLLECTION),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount),
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<PointsEntry, 'id'>) }));
-}
-
-/** Recherche un client par email (annuaire, côté comptoir). */
-export async function findCustomerUidByEmail(
-  email: string,
-): Promise<string | null> {
-  if (!db) return null;
-  const { collection, getDocs, query, where, limit } = await import('firebase/firestore');
-  const q = query(
-    collection(db, CUSTOMERS_COLLECTION),
-    where('email', '==', email.trim().toLowerCase()),
-    limit(1),
-  );
-  const snap = await getDocs(q);
-  return snap.docs[0]?.id ?? null;
-}
-
-/**
- * Recherche un client par email et renvoie uid + solde — utilisé par le
- * comptoir pour afficher les points en direct pendant la saisie de commande.
- * Lecture ponctuelle (2 reads max), à la demande uniquement.
- */
-export async function lookupCustomerByEmail(
-  email: string,
-): Promise<{ uid: string; profile: CustomerProfile } | null> {
-  const uid = await findCustomerUidByEmail(email);
-  if (!uid) return null;
-  const snap = await getDoc(doc(db!, CUSTOMERS_COLLECTION, uid));
-  if (!snap.exists()) return null;
-  return { uid, profile: snap.data() as CustomerProfile };
-}
-
-/** Nom du champ email dans l'index. */
-export const CUSTOMER_EMAIL_FIELD = 'email';
-
-/**
- * Création d'un compte client PAR L'ADMIN, depuis le comptoir.
- * Utilise une app Firebase secondaire : la session admin reste intacte.
- * Retourne uid + profil du nouveau client (0 point).
- */
-export async function adminCreateCustomer(
-  email: string,
-  password: string,
-  displayName?: string,
-): Promise<{ uid: string; profile: CustomerProfile }> {
-  const { withSecondaryAuth } = await import('./firebase');
-  const uid = await withSecondaryAuth(async (secondaryAuth) => {
-    const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-    const cred = await createUserWithEmailAndPassword(
-      secondaryAuth,
-      email.trim().toLowerCase(),
-      password,
-    );
-    if (displayName?.trim()) {
-      await updateProfile(cred.user, { displayName: displayName.trim() });
-    }
-    return cred.user.uid;
-  });
-
-  const profile: CustomerProfile = {
-    points: 0,
-    lifetime: 0,
-    email: email.trim().toLowerCase(),
-    ...(displayName?.trim() ? { displayName: displayName.trim() } : {}),
+    amountEur: opts?.amountEur ?? null,
+    status: 'available',
     createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-  await setDoc(doc(db!, CUSTOMERS_COLLECTION, uid), profile);
-  return { uid, profile };
-}
-
-/** Met à jour le champ email dénormalisé du profil (après inscription). */
-export async function setCustomerEmail(uid: string, email: string): Promise<void> {
-  if (!db) return;
-  await updateDoc(doc(db, CUSTOMERS_COLLECTION, uid), {
-    email: email.trim().toLowerCase(),
-  }).catch(() => {
-    /* le document n'existe pas encore : création silencieuse à la prochaine écriture */
+    createdBy: opts?.createdBy ?? null,
   });
+  return code;
 }
 
-/** Euros équivalents à un solde de points (affichage « = X,XX € »). */
-export const pointsToEuros = (points: number): number =>
-  Math.round((points / POINTS_PER_EURO) * 100) / 100;
+/** Liste en temps réel des codes (admin). */
+export function subscribeLoyaltyCodes(
+  cb: (codes: LoyaltyCode[]) => void,
+): () => void {
+  if (!isFirebaseConfigured || !db) {
+    cb([]);
+    return () => {};
+  }
+  return onSnapshot(
+    query(collection(db, CODES_COLLECTION)),
+    (snap) => {
+      const codes = snap.docs.map((d) => d.data() as LoyaltyCode);
+      codes.sort((a, b) => b.createdAt - a.createdAt);
+      cb(codes);
+    },
+    (err) => {
+      console.error('[loyalty-codes] subscribe failed:', err);
+      cb([]);
+    },
+  );
+}
+
+/** Résultat de la saisie d'un code par un client. */
+export type RedeemResult =
+  | { ok: true; points: number; newBalance: number }
+  | { ok: false; error: 'not-found' | 'used' | 'cancelled' | 'network' };
+
+/**
+ * Saisie d'un code par le client connecté, en transaction pour éviter
+ * qu'un même code soit utilisé deux fois (double-clic, deux onglets…).
+ */
+export async function redeemCode(
+  uid: string,
+  rawCode: string,
+): Promise<RedeemResult> {
+  if (!db) return { ok: false, error: 'network' };
+  const code = normalizeCode(rawCode);
+  if (!code) return { ok: false, error: 'not-found' };
+
+  try {
+    const newBalance = await runTransaction(db, async (tx) => {
+      const codeRef = doc(db!, CODES_COLLECTION, code);
+      const codeSnap = await tx.get(codeRef);
+      if (!codeSnap.exists()) throw new Error('not-found');
+      const data = codeSnap.data() as LoyaltyCode;
+      if (data.status === 'redeemed') throw new Error('used');
+      if (data.status === 'cancelled') throw new Error('cancelled');
+
+      const userRef = loyaltyDocRef(uid);
+      const userSnap = await tx.get(userRef);
+      const current = userSnap.exists()
+        ? ((userSnap.data() as LoyaltyProfile).points ?? 0)
+        : 0;
+      const next = current + (data.points ?? 0);
+
+      tx.update(codeRef, {
+        status: 'redeemed',
+        redeemedBy: uid,
+        redeemedAt: Date.now(),
+      });
+      tx.set(
+        userRef,
+        {
+          points: next,
+          updatedAt: Date.now(),
+        },
+        { merge: true },
+      );
+      return next;
+    });
+    return { ok: true, points: 0, newBalance };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'network';
+    if (msg.includes('not-found')) return { ok: false, error: 'not-found' };
+    if (msg.includes('used')) return { ok: false, error: 'used' };
+    if (msg.includes('cancelled')) return { ok: false, error: 'cancelled' };
+    return { ok: false, error: 'network' };
+  }
+}
+
+/** Échange des points contre un cadeau (client, au comptoir). */
+export async function claimGift(
+  uid: string,
+  tier: GiftTier,
+): Promise<{ ok: boolean; error?: string }> {
+  if (!db) return { ok: false, error: 'Firebase non configuré' };
+  try {
+    await runTransaction(db, async (tx) => {
+      const userRef = loyaltyDocRef(uid);
+      const snap = await tx.get(userRef);
+      if (!snap.exists()) throw new Error('no-points');
+      const profile = snap.data() as LoyaltyProfile;
+      if ((profile.points ?? 0) < tier.threshold) throw new Error('not-enough');
+      tx.set(
+        userRef,
+        {
+          points: profile.points - tier.threshold,
+          spent: (profile.spent ?? 0) + tier.threshold,
+          updatedAt: Date.now(),
+        },
+        { merge: true },
+      );
+    });
+    return { ok: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown';
+    return { ok: false, error: msg };
+  }
+}
+
+/** Normalise la saisie : OS-4f7b2k → OS-4F7B2K (l'utilisateur oublie souvent le préfixe). */
+export function normalizeCode(input: string): string {
+  const cleaned = input.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return cleaned.startsWith('OS') ? `OS-${cleaned.slice(2)}` : '';
+}
+
+/** Récupère l'article de la carte correspondant à un palier (menu statique en secours). */
+export function giftProduct(tier: GiftTier): Product | undefined {
+  return MENU.find((p) => p.id === tier.productId);
+}

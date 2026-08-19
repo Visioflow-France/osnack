@@ -1,26 +1,26 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+  type User,
+} from 'firebase/auth';
 import { CATEGORY_LABELS, effectivePrice, type Category, type Product } from '@/lib/menu';
 import { formatPrice } from '@/lib/format';
 import { createOrder, type OrderItem } from '@/lib/products';
-import {
-  addPoints,
-  adminCreateCustomer,
-  lookupCustomerByEmail,
-  pointsToEuros,
-  POINTS_PER_EURO,
-  spendPoints,
-  type CustomerProfile,
-} from '@/lib/loyalty';
+import { createLoyaltyCode, pointsForAmount } from '@/lib/loyalty';
+import { auth, withSecondaryAuth } from '@/lib/firebase';
 
 /**
  * Saisie d'une commande comptoir :
  * - articles (recherche dans le menu) + quantités, total automatique ;
- * - client identifié par email (optionnel) : ses points s'affichent ;
- * - au payement : le solde est crédité de 10 pts/€ (ou débité si paiement
- *   en points choisi).
- * Écrit 1 commande + 2 documents client (profil + historique) — ponctuel.
+ * - client identifié par email (optionnel) : création de compte possible
+ *   sans déloguer la session admin (app Firebase secondaire) ;
+ * - fidélité par CODE : à l'enregistrement, un code OS-XXXXXX est généré
+ *   avec les points correspondant au montant — le client le saisit dans
+ *   son espace /compte pour être crédité (aucune écriture directe de
+ *   points côté comptoir, conforme aux règles Firestore).
  */
 
 const CATS: Category[] = [
@@ -41,49 +41,22 @@ interface Props {
 
 export function OrderForm({ products, onClose, onSaved }: Props) {
   const [email, setEmail] = useState('');
-  const [customer, setCustomer] = useState<{ uid: string; profile: CustomerProfile } | null>(null);
-  const [lookupState, setLookupState] = useState<'idle' | 'searching' | 'found' | 'unknown'>('idle');
   const [lines, setLines] = useState<{ product: Product; qty: number }[]>([]);
   const [search, setSearch] = useState('');
-  const [payWithPoints, setPayWithPoints] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Création de compte client inline (quand l'email est inconnu).
+  // Création de compte client inline (email inconnu).
   const [newName, setNewName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [creatingAccount, setCreatingAccount] = useState(false);
   const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountCreated, setAccountCreated] = useState<string | null>(null);
 
   const total = useMemo(
     () => lines.reduce((sum, l) => sum + effectivePrice(l.product) * l.qty, 0),
     [lines],
   );
-  const pointsToEarn = Math.round(total * POINTS_PER_EURO);
-  const pointsNeeded = Math.ceil(total * POINTS_PER_EURO); // tout en points
-  const canPayWithPoints = customer != null && customer.profile.points >= pointsNeeded && total > 0;
-
-  // Recherche du client par email (debounce 600 ms, lecture ponctuelle).
-  useEffect(() => {
-    const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes('@')) {
-      setCustomer(null);
-      setLookupState('idle');
-      return;
-    }
-    setLookupState('searching');
-    const t = window.setTimeout(() => {
-      lookupCustomerByEmail(trimmed)
-        .then((res) => {
-          setCustomer(res);
-          setLookupState(res ? 'found' : 'unknown');
-        })
-        .catch(() => {
-          setCustomer(null);
-          setLookupState('unknown');
-        });
-    }, 600);
-    return () => window.clearTimeout(t);
-  }, [email]);
+  const pointsForOrder = pointsForAmount(total);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -96,36 +69,6 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
       : products;
     return base.slice(0, 8);
   }, [products, search]);
-
-  /** Création du compte client au comptoir (session admin préservée). */
-  async function handleCreateAccount(e: React.FormEvent) {
-    e.preventDefault();
-    setAccountError(null);
-    if (newPassword.length < 6)
-      return setAccountError('Mot de passe : 6 caractères minimum.');
-    if (!email.trim().includes('@'))
-      return setAccountError('Renseigne un email valide ci-dessus.');
-    setCreatingAccount(true);
-    try {
-      const created = await adminCreateCustomer(email, newPassword, newName);
-      setCustomer(created);
-      setLookupState('found');
-      setNewName('');
-      setNewPassword('');
-    } catch (err) {
-      console.error(err);
-      const code = (err as { code?: string })?.code ?? '';
-      setAccountError(
-        code.includes('email-already-in-use')
-          ? 'Un compte existe déjà avec cet email.'
-          : code.includes('weak-password')
-            ? 'Mot de passe trop court.'
-            : 'Échec de la création du compte.',
-      );
-    } finally {
-      setCreatingAccount(false);
-    }
-  }
 
   function addLine(p: Product) {
     setLines((prev) => {
@@ -147,6 +90,44 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
     );
   }
 
+  /** Création du compte client au comptoir (session admin préservée). */
+  async function handleCreateAccount(e: React.FormEvent) {
+    e.preventDefault();
+    setAccountError(null);
+    if (newPassword.length < 6)
+      return setAccountError('Mot de passe : 6 caractères minimum.');
+    if (!email.trim().includes('@'))
+      return setAccountError('Renseigne un email valide ci-dessus.');
+    setCreatingAccount(true);
+    try {
+      await withSecondaryAuth(async (secondaryAuth) => {
+        const cred = await createUserWithEmailAndPassword(
+          secondaryAuth,
+          email.trim().toLowerCase(),
+          newPassword,
+        );
+        if (newName.trim()) {
+          await updateProfile(cred.user, { displayName: newName.trim() });
+        }
+      });
+      setAccountCreated(email.trim());
+      setNewName('');
+      setNewPassword('');
+    } catch (err) {
+      console.error(err);
+      const code = (err as { code?: string })?.code ?? '';
+      setAccountError(
+        code.includes('email-already-in-use')
+          ? 'Un compte existe déjà avec cet email.'
+          : code.includes('weak-password')
+            ? 'Mot de passe trop court.'
+            : 'Échec de la création du compte.',
+      );
+    } finally {
+      setCreatingAccount(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -161,7 +142,6 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
         price: effectivePrice(l.product),
       }));
 
-      // Référence lisible : n° du jour + compteur minute.
       const now = new Date();
       const reference = `${String(now.getHours()).padStart(2, '0')}${String(
         now.getMinutes(),
@@ -171,24 +151,20 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
         reference,
         status: 'nouvelle',
         customerEmail: email.trim() || undefined,
-        paidWithPoints: payWithPoints || undefined,
         items,
         total: Math.round(total * 100) / 100,
         createdAt: Date.now(),
       });
 
-      // Fidélité : débit puis crédit (paiement en points d'abord, puis gain
-      // sur le montant réglé en euros).
+      // Fidélité : génération d'un code à remettre au client (avec le
+      // ticket) — il le saisira dans /compte pour être crédité.
       let msg = `Commande ${reference} enregistrée.`;
-      if (customer) {
-        if (payWithPoints) {
-          await spendPoints(customer.uid, pointsNeeded, `Commande ${reference} — paiement en points`);
-          msg += ` ${pointsNeeded} pts débités.`;
-        } else if (total > 0) {
-          const earn = pointsToEarn;
-          await addPoints(customer.uid, earn, `Commande ${reference}`);
-          msg += ` +${earn} pts crédités.`;
-        }
+      if (pointsForOrder > 0) {
+        const code = await createLoyaltyCode(pointsForOrder, {
+          amountEur: Math.round(total * 100) / 100,
+          createdBy: 'comptoir',
+        });
+        msg += ` Code fidélité ${code} (${pointsForOrder} pts) à remettre au client.`;
       }
       onSaved(msg);
       onClose();
@@ -219,56 +195,56 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setAccountCreated(null);
+              }}
               placeholder="client@exemple.fr"
             />
           </label>
 
-          {lookupState === 'searching' && (
-            <p className="admin-hint">Recherche du compte…</p>
-          )}
-          {lookupState === 'found' && customer && (
+          {accountCreated ? (
             <div className="account-notice">
-              ✓ {customer.profile.displayName || 'Client'} —{' '}
-              <strong>{customer.profile.points} pts</strong> (
-              {formatPrice(pointsToEuros(customer.profile.points))})
+              ✓ Compte créé pour {accountCreated}. Le client peut se connecter
+              sur /compte avec le mot de passe provisoire.
             </div>
-          )}
-          {lookupState === 'unknown' && email.trim() && (
-            <div className="order-create-account">
-              <p className="admin-hint">
-                Aucun compte fidélité pour cet email. Crée-le en 10 secondes
-                (le client gagnera des points sur cette commande) :
-              </p>
-              <form className="admin-row" onSubmit={handleCreateAccount}>
-                <label className="admin-field">
-                  <span>Prénom du client</span>
-                  <input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Prénom"
-                  />
-                </label>
-                <label className="admin-field">
-                  <span>Mot de passe provisoire *</span>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="6 caractères min. (à communiquer au client)"
-                    autoComplete="new-password"
-                  />
-                </label>
-                <button
-                  type="submit"
-                  className="admin-btn solid sm"
-                  disabled={creatingAccount}
-                >
-                  {creatingAccount ? 'Création…' : 'Créer le compte'}
-                </button>
-              </form>
-              {accountError && <div className="admin-error">{accountError}</div>}
-            </div>
+          ) : (
+            email.trim().includes('@') && (
+              <div className="order-create-account">
+                <p className="admin-hint">
+                  Pas encore de compte ? Crée-le en 10 secondes (le client
+                  cumulera les points avec le code généré) :
+                </p>
+                <form className="admin-row" onSubmit={handleCreateAccount}>
+                  <label className="admin-field">
+                    <span>Prénom du client</span>
+                    <input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Prénom"
+                    />
+                  </label>
+                  <label className="admin-field">
+                    <span>Mot de passe provisoire *</span>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="6 caractères min. (à communiquer au client)"
+                      autoComplete="new-password"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="admin-btn solid sm"
+                    disabled={creatingAccount}
+                  >
+                    {creatingAccount ? 'Création…' : 'Créer le compte'}
+                  </button>
+                </form>
+                {accountError && <div className="admin-error">{accountError}</div>}
+              </div>
+            )
           )}
 
           <label className="admin-field">
@@ -324,23 +300,10 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
             <strong>{formatPrice(total)}</strong>
           </div>
 
-          {canPayWithPoints && (
-            <label className="admin-check">
-              <input
-                type="checkbox"
-                checked={payWithPoints}
-                onChange={(e) => setPayWithPoints(e.target.checked)}
-              />
-              <span>
-                Payer en points ({Math.ceil(total * POINTS_PER_EURO)} pts)
-              </span>
-            </label>
-          )}
-
           <p className="admin-hint">
-            {customer && !payWithPoints && total > 0
-              ? `Ce client gagnera ${pointsToEarn} pts (${formatPrice(pointsToEuros(pointsToEarn))}).`
-              : '10 points = 1 € · 1 € dépensé = 10 points.'}
+            {pointsForOrder > 0
+              ? `Un code fidélité de ${pointsForOrder} pts (1 € = 1 pt) sera généré à remettre au client.`
+              : '1 € dépensé = 1 point — le code est généré dès 1 €.'}
           </p>
 
           {error && <div className="admin-error">{error}</div>}

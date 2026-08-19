@@ -1,33 +1,33 @@
 import { FloatingNav } from '@/components/FloatingNav';
 import { Hero } from '@/components/Hero';
-import { Marquee } from '@/components/Marquee';
-import { Story } from '@/components/Story';
-import { BestSellers } from '@/components/BestSellers';
-import { Reviews } from '@/components/Reviews';
+import { NewsCarousel } from '@/components/NewsCarousel';
+import { LoyaltyBanner } from '@/components/LoyaltyBanner';
+import { Classics } from '@/components/Classics';
 import { Footer } from '@/components/Footer';
-import { getGoogleReviews } from '@/lib/google-reviews';
 import { getMenu } from '@/lib/menuDoc';
 
-// Les avis Google sont récupérés côté serveur et mis en cache (ISR) 1 h.
-// Le menu est servi depuis le document unique (cache ISR partagé) : 0 lecture
+// La page d'accueil suit la structure demandée :
+//  1. Hero plein écran (identité O'Snack)
+//  2. « L'actualité O'Snack » (carrousel, équiv. BK)
+//  3. Bannière fidélité (gabarit du bloc « offres exclusives » BK) :
+//     points cumulés à chaque commande + compte client
+//  4. « Découvrez nos classiques » (plats, équiv. BK)
+//  5. Mentions légales & contact (footer)
+//
+// ISR : le menu vient du document unique (cache serveur 5 min) — 0 lecture
 // Firestore côté client.
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export default async function Home() {
-  const [reviewsData, products] = await Promise.all([
-    getGoogleReviews(),
-    getMenu(),
-  ]);
-
+  const products = await getMenu();
   return (
     <>
       <FloatingNav />
       <main>
         <Hero />
-        <Marquee />
-        <Story />
-        <BestSellers initialProducts={products} />
-        <Reviews data={reviewsData} />
+        <NewsCarousel />
+        <LoyaltyBanner />
+        <Classics initialProducts={products} />
       </main>
       <Footer />
     </>

@@ -4,14 +4,14 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * ADMIN UNIQUE : le compte claytonmicillo2009@gmail.com (UID ci-dessous).
+     * ADMIN UNIQUE : le compte visioflow77@gmail.com (UID ci-dessous).
      * Tous les autres comptes Auth sont des CLIENTS : ils ne voient que
      * leur espace fidélité /compte. Pour changer d'admin, remplace l'UID
      * (Console → Authentication → Users) et redéploie les règles.
      */
     function isAdmin() {
       return request.auth != null
-             && request.auth.uid == 'w3uqTf4xDRcgvJlIwaqTpGm8I2E2';
+             && request.auth.uid == 'Fqbbqe5i2qdp3g7zuOT6Hpxv6aC3';
     }
 
     // Menu public agrégé en UN document (lecture : cache ISR serveur).

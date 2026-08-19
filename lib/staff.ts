@@ -14,7 +14,7 @@
  */
 
 /** UID du compte admin unique (Authentication → Users). */
-export const ADMIN_UID = 'w3uqTf4xDRcgvJlIwaqTpGm8I2E2';
+export const ADMIN_UID = 'Fqbbqe5i2qdp3g7zuOT6Hpxv6aC3';
 
 /** Vérifie si l'utilisateur connecté est l'admin unique. */
 export function isStaffUser(uid: string): boolean {

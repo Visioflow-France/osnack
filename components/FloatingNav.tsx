@@ -12,7 +12,6 @@ import { LINKS } from '@/lib/links';
 const NAV_ITEMS = [
   { name: 'Carte', link: '/carte' },
   { name: 'Histoire', link: '/histoire' },
-  { name: 'Compte', link: '/compte' },
 ];
 
 export function FloatingNav() {

@@ -2413,6 +2413,13 @@
   }
   .admin-check input { width: 18px; height: 18px; accent-color: #fff; }
 
+  .admin-file-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .admin-file-hidden { display: none; }
+
   .admin-hint {
     font-family: var(--font-ibm), monospace;
     font-size: 0.68rem;

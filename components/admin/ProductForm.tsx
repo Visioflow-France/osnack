@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import {
   CATEGORY_LABELS,
@@ -48,16 +48,25 @@ export function ProductForm({ initial, onClose }: Props) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const filesRef = useRef<HTMLInputElement>(null);
 
   const isEdit = Boolean(initial);
 
+  /** Ouvre le sélecteur demandé : caméra ou galerie/fichiers. */
+  function openPicker(mode: 'camera' | 'files') {
+    const input = mode === 'camera' ? cameraRef.current : filesRef.current;
+    if (!input) return;
+    input.value = ''; // permet de re-choisir le même fichier deux fois
+    input.click();
+  }
+
   /**
-   * Choisir une photo locale → compression WebP (≤ 800 px, q80, < 150 Ko)
-   * → upload Storage. L'ancienne image Firebase est supprimée juste après
-   * l'enregistrement réussi du plat (voir handleSubmit).
+   * Photo choisie (caméra ou fichiers) → compression WebP (≤ 800 px, q80,
+   * < 150 Ko) → upload Storage. L'ancienne image Firebase est supprimée
+   * juste après l'enregistrement réussi du plat (voir handleSubmit).
    */
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
@@ -152,14 +161,45 @@ export function ProductForm({ initial, onClose }: Props) {
           </div>
 
           <label className="admin-field">
-            <span>Photo du plat (WebP compressé automatiquement)</span>
+            <span>Photo du plat</span>
+            <div className="admin-file-actions">
+              <button
+                type="button"
+                className="admin-btn ghost sm"
+                disabled={uploading || saving}
+                onClick={() => openPicker('camera')}
+              >
+                📷 Prendre une photo
+              </button>
+              <button
+                type="button"
+                className="admin-btn ghost sm"
+                disabled={uploading || saving}
+                onClick={() => openPicker('files')}
+              >
+                📁 Depuis mes fichiers
+              </button>
+            </div>
+            {/* Inputs cachés : un pour la caméra (mobile/tablette), un pour
+                la galerie — le navigateur choisit selon l'attribut capture. */}
             <input
-              ref={fileRef}
+              ref={cameraRef}
               type="file"
               accept="image/*"
+              capture="environment"
+              className="admin-file-hidden"
               onChange={handleFile}
               disabled={uploading || saving}
             />
+            <input
+              ref={filesRef}
+              type="file"
+              accept="image/*"
+              className="admin-file-hidden"
+              onChange={handleFile}
+              disabled={uploading || saving}
+            />
+            {uploading && <p className="admin-hint">Compression &amp; envoi en cours…</p>}
           </label>
           <p className="admin-hint">
             Compression automatique : WebP, 800 px max, ~150 Ko max. L&apos;ancienne

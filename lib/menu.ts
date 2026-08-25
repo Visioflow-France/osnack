@@ -53,6 +53,57 @@ export const CATEGORIES: (Category | 'all')[] = [
 ];
 
 /**
+ * Filtres « virtuels » de la barre de la carte : sous-familles (crêpes salées /
+ * sucrées, distinguées par le tag du produit) et regroupement desserts & boissons.
+ * Ils ne sont pas des `Category` (le stockage Firestore ne change pas), ce sont
+ * des vues supplémentaires proposées au client.
+ */
+export type SpecialFilter = 'crepes-salees' | 'crepes-sucrees' | 'desserts-boissons';
+
+/** Tout ce que la barre de filtres de la carte peut afficher. */
+export type Filter = Category | 'all' | SpecialFilter;
+
+export const FILTER_LABELS: Record<Filter, string> = {
+  ...CATEGORY_LABELS,
+  'crepes-salees': 'Crêpes Salées',
+  'crepes-sucrees': 'Crêpes Sucrées',
+  'desserts-boissons': 'Desserts & Boissons',
+};
+
+/** Ordre d'affichage de la barre de filtres de la carte. */
+export const MENU_FILTERS: Filter[] = [
+  'all',
+  'sandwichs',
+  'burgers',
+  'menus',
+  'texmex',
+  'crepes-salees',
+  'crepes-sucrees',
+  'desserts-boissons',
+];
+
+/** Un crêpe est « sucrée » / « salée » selon son tag (« Sucré(e) » / « Salée »). */
+const isSweetCrepe = (p: Product): boolean => /sucr/i.test(p.tag ?? '');
+const isSavoryCrepe = (p: Product): boolean => /sal/i.test(p.tag ?? '');
+
+/** Le produit appartient-il au filtre donné ? */
+export const matchesFilter = (p: Product, filter: Filter): boolean => {
+  if (filter === 'all') return true;
+  if (filter === 'crepes-salees') return p.category === 'crepes' && isSavoryCrepe(p);
+  if (filter === 'crepes-sucrees') return p.category === 'crepes' && isSweetCrepe(p);
+  if (filter === 'desserts-boissons')
+    return p.category === 'desserts' || p.category === 'boissons';
+  return p.category === filter;
+};
+
+export const countByFilter = (filter: Filter, list: Product[] = MENU): number =>
+  list.filter((p) => matchesFilter(p, filter)).length;
+
+/** Valide une valeur `?cat=` reçue dans l'URL (liens « Découvrir » de l'accueil). */
+export const isFilter = (value: string | null): value is Filter =>
+  value != null && value in FILTER_LABELS;
+
+/**
  * One-line context shown above the grid when a specific category is selected
  * (bread options, supplements, shared preparation notes…). Avoids repeating the
  * same info on every card.
@@ -67,6 +118,15 @@ export const CATEGORY_NOTES: Partial<Record<Category, string>> = {
   texmex: 'À partager, avec nos sauces maison.',
   desserts: 'Desserts maison et glaces Häagen-Dazs.',
   boissons: 'Boissons fraîches et milkshakes onctueux. Supplément saveur milkshake : +1,00 €.',
+};
+
+/** Notes affichées au-dessus de la grille pour chaque filtre de la barre. */
+export const FILTER_NOTES: Partial<Record<Filter, string>> = {
+  ...CATEGORY_NOTES,
+  'crepes-salees': 'Pâte à crêpes maison — les salées, généreusement garnies.',
+  'crepes-sucrees': 'Pâte à crêpes maison — les sucrées, pour les gourmands.',
+  'desserts-boissons':
+    'Desserts maison, glaces Häagen-Dazs, boissons fraîches et milkshakes onctueux. Supplément saveur milkshake : +1,00 €.',
 };
 
 /** True when a promotional price is set and lower than the base price. */
@@ -878,5 +938,5 @@ export const MENU: Product[] = [
   },
 ];
 
-export const countByCategory = (cat: Category | 'all', list: Product[] = MENU): number =>
-  cat === 'all' ? list.length : list.filter((p) => p.category === cat).length;
+// NOTE : pour compter les plats d'un filtre de la barre de la carte (y compris
+// les filtres virtuels), utiliser `countByFilter`.

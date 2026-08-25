@@ -22,6 +22,7 @@ import { formatPrice } from '@/lib/format';
 import { removeProduct, seedProducts, updateProduct } from '@/lib/products';
 import { ProductForm } from './ProductForm';
 import { LoyaltyAdmin } from './LoyaltyAdmin';
+import { HomeSlidesAdmin } from './HomeSlidesAdmin';
 
 export function AdminApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -139,7 +140,7 @@ function Dashboard({ user }: { user: User }) {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [tab, setTab] = useState<'carte' | 'fidelite'>('carte');
+  const [tab, setTab] = useState<'carte' | 'fidelite' | 'accueil'>('carte');
 
   function flash(msg: string) {
     setToast(msg);
@@ -223,6 +224,12 @@ function Dashboard({ user }: { user: User }) {
           Gestion de la carte
         </button>
         <button
+          className={`admin-tab ${tab === 'accueil' ? 'active' : ''}`}
+          onClick={() => setTab('accueil')}
+        >
+          Accueil
+        </button>
+        <button
           className={`admin-tab ${tab === 'fidelite' ? 'active' : ''}`}
           onClick={() => setTab('fidelite')}
         >
@@ -232,6 +239,8 @@ function Dashboard({ user }: { user: User }) {
 
       {tab === 'fidelite' ? (
         <LoyaltyAdmin user={user} />
+      ) : tab === 'accueil' ? (
+        <HomeSlidesAdmin />
       ) : (
         <>
           <div className="admin-toolbar">

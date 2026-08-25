@@ -10,6 +10,14 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Slides du carrousel de catégories (page d'accueil) : lecture publique,
+    // écriture admin. Les docs n'existent pas tant que l'admin n'a rien changé —
+    // le site retombe alors sur les valeurs par défaut du code.
+    match /home_slides/{id} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
     // ---- Programme fidélité ----
 
     // Profil fidélité : chaque client ne voit et ne modifie que le sien.

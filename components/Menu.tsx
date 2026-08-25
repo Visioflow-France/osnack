@@ -3,24 +3,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
-  CATEGORIES,
-  CATEGORY_LABELS,
-  CATEGORY_NOTES,
-  countByCategory,
+  FILTER_LABELS,
+  FILTER_NOTES,
+  MENU_FILTERS,
+  countByFilter,
   effectivePrice,
   hasMenuPrice,
   hasPromo,
   isAvailable,
+  isFilter,
+  matchesFilter,
   promoPercent,
-  type Category,
   type Product,
+  type Filter,
 } from '@/lib/menu';
 import { useProducts } from '@/lib/useProducts';
 import { formatPrice } from '@/lib/format';
 import { LINKS } from '@/lib/links';
 import { Reveal } from './Reveal';
-
-type Filter = Category | 'all';
 
 export function Menu() {
   const [filter, setFilter] = useState<Filter>('all');
@@ -30,9 +30,21 @@ export function Menu() {
   const visible = useMemo(() => products.filter(isAvailable), [products]);
 
   const filtered = useMemo(
-    () => (filter === 'all' ? visible : visible.filter((p) => p.category === filter)),
+    () => visible.filter((p) => matchesFilter(p, filter)),
     [filter, visible],
   );
+
+  // Filtre posé via l'URL (`/carte?cat=burgers`) par les boutons « Découvrir »
+  // de la page d'accueil : active le filtre puis amène à la grille.
+  useEffect(() => {
+    const cat = new URLSearchParams(window.location.search).get('cat');
+    if (!isFilter(cat)) return;
+    setFilter(cat);
+    requestAnimationFrame(() => {
+      const target = document.getElementById('menuGrid') ?? document.getElementById('menu');
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
 
   return (
     <section className="menu section-pad" id="menu">
@@ -74,19 +86,19 @@ export function Menu() {
         </div>
 
         <div className="filters" id="filters">
-          {CATEGORIES.map((cat) => (
+          {MENU_FILTERS.map((cat) => (
             <button
               key={cat}
               className={`filter-btn ${filter === cat ? 'active' : ''}`}
               onClick={() => setFilter(cat)}
             >
-              {CATEGORY_LABELS[cat]} <span className="count">({countByCategory(cat, visible)})</span>
+              {FILTER_LABELS[cat]} <span className="count">({countByFilter(cat, visible)})</span>
             </button>
           ))}
         </div>
 
-        {filter !== 'all' && CATEGORY_NOTES[filter] && (
-          <p className="menu-cat-note">{CATEGORY_NOTES[filter]}</p>
+        {filter !== 'all' && FILTER_NOTES[filter] && (
+          <p className="menu-cat-note">{FILTER_NOTES[filter]}</p>
         )}
 
         <div className="menu-grid" id="menuGrid">

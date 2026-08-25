@@ -19,7 +19,7 @@ export default async function CartePage() {
     <>
       <FloatingNav />
       <main>
-        <Menu initialProducts={products} />
+        <Menu />
       </main>
       <Footer />
     </>

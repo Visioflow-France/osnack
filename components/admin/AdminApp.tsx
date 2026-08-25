@@ -170,17 +170,16 @@ function Login() {
 
 /* ------------------------------- Dashboard ------------------------------- */
 
-type Tab = 'carte' | 'commandes' | 'fidelite';
+type Tab = 'accueil' | 'carte' | 'commandes' | 'fidelite';
 
 function Dashboard({ user }: { user: User }) {
   // Menu admin : chargé UNE fois via /api/menu (cache ISR) — pas de boucle.
   const { products } = useProducts();
-  const [tab, setTab] = useState<Tab>('carte');
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [ordering, setOrdering] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [tab, setTab] = useState<'carte' | 'fidelite' | 'accueil'>('carte');
+  const [tab, setTab] = useState<Tab>('carte');
 
   function flash(msg: string) {
     setToast(msg);

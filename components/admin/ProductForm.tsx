@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import Image from 'next/image';
 import {
   CATEGORY_LABELS,
@@ -8,6 +8,7 @@ import {
   type Product,
 } from '@/lib/menu';
 import { createProduct, updateProduct } from '@/lib/products';
+import { deleteDishImageByUrl, uploadDishImage } from '@/lib/storage';
 
 const CATS: Category[] = [
   'sandwichs',
@@ -45,9 +46,41 @@ export function ProductForm({ initial, onClose }: Props) {
   const [bestseller, setBestseller] = useState(initial?.bestseller === true);
   const [order, setOrder] = useState(initial?.order != null ? String(initial.order) : '');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const filesRef = useRef<HTMLInputElement>(null);
 
   const isEdit = Boolean(initial);
+
+  /** Ouvre le sélecteur demandé : caméra ou galerie/fichiers. */
+  function openPicker(mode: 'camera' | 'files') {
+    const input = mode === 'camera' ? cameraRef.current : filesRef.current;
+    if (!input) return;
+    input.value = ''; // permet de re-choisir le même fichier deux fois
+    input.click();
+  }
+
+  /**
+   * Photo choisie (caméra ou fichiers) → compression WebP (≤ 800 px, q80,
+   * < 150 Ko) → upload Storage. L'ancienne image Firebase est supprimée
+   * juste après l'enregistrement réussi du plat (voir handleSubmit).
+   */
+  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploading(true);
+    try {
+      const url = await uploadDishImage(initial?.id ?? `nouveau-${Date.now()}`, file);
+      setImage(url);
+    } catch (err) {
+      console.error(err);
+      setError("Échec de l'upload image. Firebase Storage est-il activé ?");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,11 +115,18 @@ export function ProductForm({ initial, onClose }: Props) {
 
     setSaving(true);
     try {
+      // Nettoyage : si la photo a changé, supprimer l'ancienne dans Storage
+      // (uniquement si elle nous appartenait — les URLs externes sont ignorées).
+      const oldImage = initial?.image;
+      const imageChanged =
+        oldImage && oldImage !== data.image && oldImage !== FALLBACK_IMG;
+
       if (initial) {
         await updateProduct(initial.id, data);
       } else {
         await createProduct(data);
       }
+      if (imageChanged) await deleteDishImageByUrl(oldImage);
       onClose();
     } catch (err) {
       console.error(err);
@@ -121,7 +161,53 @@ export function ProductForm({ initial, onClose }: Props) {
           </div>
 
           <label className="admin-field">
-            <span>Image (URL)</span>
+            <span>Photo du plat</span>
+            <div className="admin-file-actions">
+              <button
+                type="button"
+                className="admin-btn ghost sm"
+                disabled={uploading || saving}
+                onClick={() => openPicker('camera')}
+              >
+                📷 Prendre une photo
+              </button>
+              <button
+                type="button"
+                className="admin-btn ghost sm"
+                disabled={uploading || saving}
+                onClick={() => openPicker('files')}
+              >
+                📁 Depuis mes fichiers
+              </button>
+            </div>
+            {/* Inputs cachés : un pour la caméra (mobile/tablette), un pour
+                la galerie — le navigateur choisit selon l'attribut capture. */}
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="admin-file-hidden"
+              onChange={handleFile}
+              disabled={uploading || saving}
+            />
+            <input
+              ref={filesRef}
+              type="file"
+              accept="image/*"
+              className="admin-file-hidden"
+              onChange={handleFile}
+              disabled={uploading || saving}
+            />
+            {uploading && <p className="admin-hint">Compression &amp; envoi en cours…</p>}
+          </label>
+          <p className="admin-hint">
+            Compression automatique : WebP, 800 px max, ~150 Ko max. L&apos;ancienne
+            photo est supprimée de Firebase Storage lors du remplacement.
+          </p>
+
+          <label className="admin-field">
+            <span>— ou Image (URL)</span>
             <input
               type="url"
               value={image}
@@ -245,8 +331,14 @@ export function ProductForm({ initial, onClose }: Props) {
             <button type="button" className="admin-btn ghost" onClick={onClose} disabled={saving}>
               Annuler
             </button>
-            <button type="submit" className="admin-btn solid" disabled={saving}>
-              {saving ? 'Enregistrement…' : isEdit ? 'Enregistrer' : 'Créer le plat'}
+            <button type="submit" className="admin-btn solid" disabled={saving || uploading}>
+              {uploading
+                ? 'Compression de l’image…'
+                : saving
+                  ? 'Enregistrement…'
+                  : isEdit
+                    ? 'Enregistrer'
+                    : 'Créer le plat'}
             </button>
           </div>
         </form>

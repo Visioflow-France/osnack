@@ -24,7 +24,8 @@ import { Reveal } from './Reveal';
 
 export function Menu() {
   const [filter, setFilter] = useState<Filter>('all');
-  const { products } = useProducts();
+  // Menu chargé une seule fois (props serveur ISR) — aucun polling Firestore.
+  const { products } = useProducts(initialProducts);
 
   // Hide dishes the admin has toggled off (soft remove). Deletion is permanent.
   const visible = useMemo(() => products.filter(isAvailable), [products]);

@@ -3,11 +3,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Menu public en lecture pour tout le monde ;
-    // écriture réservée aux utilisateurs authentifiés (l'admin).
-    match /products/{id} {
-      allow read: if true;
-      allow write: if request.auth != null;
+    /**
+     * ADMIN UNIQUE : le compte visioflow77@gmail.com (UID ci-dessous).
+     * Tous les autres comptes Auth sont des CLIENTS : ils ne voient que
+     * leur espace fidélité /compte. Pour changer d'admin, remplace l'UID
+     * (Console → Authentication → Users) et redéploie les règles.
+     */
+    function isAdmin() {
+      return request.auth != null
+             && request.auth.uid == 'Fqbbqe5i2qdp3g7zuOT6Hpxv6aC3';
     }
 
     // Slides du carrousel de catégories (page d'accueil) : lecture publique,
@@ -21,26 +25,24 @@ service cloud.firestore {
     // ---- Programme fidélité ----
 
     // Profil fidélité : chaque client ne voit et ne modifie que le sien.
-    // La transaction `redeemCode` (client) y écrit points/updatedAt ; le
-    // restaurant n'a pas besoin d'y toucher directement.
+    // La transaction `redeemCode` (client) y écrit points/updatedAt.
     match /loyalty_users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
     // Codes : un client authentifié peut lire un code (pour le valider) et
     // le marquer utilisé via la transaction — mais jamais en créer ni
-    // réactiver un code déjà consommé. La création reste côté admin
-    // (restaurant authentifié).
+    // réactiver un code déjà consommé. La création reste côté admin.
     match /loyalty_codes/{code} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
+      allow create: if isAdmin()
         && request.resource.data.status == 'available'
         && request.resource.data.points is number
         && request.resource.data.points >= 0;
       allow update: if request.auth != null
         && resource.data.status == 'available'
         && request.resource.data.status == 'redeemed'
-        && request.resource.data.points == request.resource.data.points
+        && request.resource.data.points == resource.data.points
         && request.resource.data.code == resource.data.code;
       allow delete: if false; // un code utilisé reste tracé
     }

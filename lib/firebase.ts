@@ -1,4 +1,4 @@
-import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
+import { deleteApp, getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
 
@@ -38,3 +38,22 @@ if (isFirebaseConfigured) {
 export const app = _app;
 export const db = _db;
 export const auth = _auth;
+
+/**
+ * App Firebase secondaire : permet à l'ADMIN de créer un compte CLIENT
+ * depuis le comptoir SANS déloguer sa propre session. On initialise un
+ * second `initializeApp` (même config, nom 'AdminWorker'), on crée le
+ * compte dessus, puis on supprime cette app temporaire.
+ */
+export async function withSecondaryAuth<T>(
+  fn: (auth: Auth) => Promise<T>,
+): Promise<T> {
+  if (!isFirebaseConfigured) throw new Error('Firebase non configuré');
+  const secondaryApp = initializeApp(firebaseConfig, 'AdminWorker');
+  try {
+    const secondaryAuth = getAuth(secondaryApp);
+    return await fn(secondaryAuth);
+  } finally {
+    await deleteApp(secondaryApp);
+  }
+}

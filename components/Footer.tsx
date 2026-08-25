@@ -110,6 +110,7 @@ export function Footer() {
             <li><Link href="/histoire" data-cursor-hover>Histoire</Link></li>
             <li><Link href="/#reviews" data-cursor-hover>Avis Clients</Link></li>
             <li><Link href="/#contact" data-cursor-hover>Nous Trouver</Link></li>
+            <li><Link href="/compte" data-cursor-hover>Mon compte fidélité</Link></li>
           </ul>
         </div>
       </div>
@@ -134,6 +135,17 @@ export function Footer() {
           <Link href="/confidentialite" data-cursor-hover>Confidentialité</Link>
           <Link href="/cookies" data-cursor-hover>Cookies</Link>
         </div>
+      </div>
+
+      <div className="footer-credit">
+        <a
+          href="https://visioflow.fr"
+          target="_blank"
+          rel="noreferrer"
+          data-cursor-hover
+        >
+          Site réalisé par <strong>visioflow.fr</strong>
+        </a>
       </div>
     </footer>
   );

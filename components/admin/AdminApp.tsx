@@ -28,6 +28,10 @@ import {
   updateProduct,
   type Order,
 } from '@/lib/products';
+import { deliverOrderAndCredit } from '@/lib/orderDelivery';
+import { checkOrderTotal } from '@/lib/orderCheck';
+import { formatPickup } from '@/lib/opening';
+import { useOrderAlert } from './orderAlert';
 import { ProductForm } from './ProductForm';
 import { OrderForm } from './OrderForm';
 import { LoyaltyAdmin } from './LoyaltyAdmin';
@@ -175,6 +179,10 @@ type Tab = 'accueil' | 'carte' | 'commandes' | 'fidelite';
 function Dashboard({ user }: { user: User }) {
   // Menu admin : chargé UNE fois via /api/menu (cache ISR) — pas de boucle.
   const { products } = useProducts();
+  // Commandes : LA SEULE écoute temps réel, remontée ici (une souscription
+  // partagée par les stats, le tableau et l'alerte sonore).
+  const orders = useOrders();
+  const orderAlert = useOrderAlert(orders);
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [ordering, setOrdering] = useState(false);
@@ -255,12 +263,39 @@ function Dashboard({ user }: { user: User }) {
         </div>
       </header>
 
+      {/* Bandeau alerte : nouvelles commandes WEB non acquittées. */}
+      {orderAlert.pending.length > 0 && (
+        <div className="admin-neworder-banner" role="alert">
+          <div className="admin-neworder-list">
+            {orderAlert.pending.map((o) => (
+              <div key={o.id} className="admin-neworder-item">
+                <strong>Nouvelle commande WEB</strong>
+                <span className="admin-neworder-ref">{o.reference ?? o.id.slice(0, 8)}</span>
+                <span>
+                  {o.customerName ?? '—'} · {formatPrice(o.total ?? 0)} ·{' '}
+                  {formatPickup(o.pickup ?? { mode: 'asap' })}
+                </span>
+                <button className="admin-btn ghost sm" onClick={() => orderAlert.ack(o.id)}>
+                  Vu
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="admin-tabs">
         <button
           className={`admin-tab ${tab === 'carte' ? 'active' : ''}`}
           onClick={() => setTab('carte')}
         >
           Gestion de la carte
+        </button>
+        <button
+          className={`admin-tab ${tab === 'commandes' ? 'active' : ''}`}
+          onClick={() => setTab('commandes')}
+        >
+          Commandes
         </button>
         <button
           className={`admin-tab ${tab === 'accueil' ? 'active' : ''}`}
@@ -288,7 +323,7 @@ function Dashboard({ user }: { user: User }) {
               <p className="admin-sub">
                 {tab === 'carte'
                   ? 'Modifications visibles sur le site sous 5 min (cache).'
-                  : 'Écoute temps réel — la seule connexion Firestore permanente.'}
+                  : 'Temps réel · les totaux web sont vérifiés contre la carte (fraîcheur ≤ 5 min).'}
               </p>
             </div>
             <div className="admin-toolbar-actions">
@@ -319,13 +354,18 @@ function Dashboard({ user }: { user: User }) {
                 <Stat label="Masqués" value={hiddenCount} />
               </>
             ) : (
-              <OrdersLive />
+              <OrdersLive orders={orders} />
             )}
           </div>
 
           <div className="admin-table-wrap">
             {tab === 'commandes' ? (
-              <OrdersTable />
+              <OrdersTable
+                orders={orders}
+                products={products}
+                pendingIds={orderAlert.pending.map((o) => o.id)}
+                onFlash={flash}
+              />
             ) : (
               <table className="admin-table">
           <thead>
@@ -453,8 +493,7 @@ function useOrders() {
   return orders;
 }
 
-function OrdersLive() {
-  const orders = useOrders();
+function OrdersLive({ orders }: { orders: Order[] | null }) {
   if (!orders) return <Stat label="Commandes" value={0} />;
   const active = orders.filter((o) => o.status !== 'livree' && o.status !== 'annulee');
   return (
@@ -475,8 +514,15 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
   annulee: 'Annulée',
 };
 
-function OrdersTable() {
-  const orders = useOrders();
+interface OrdersTableProps {
+  orders: Order[] | null;
+  products: Product[];
+  /** Commandes web non acquittées (ligne mise en évidence). */
+  pendingIds: string[];
+  onFlash: (msg: string) => void;
+}
+
+function OrdersTable({ orders, products, pendingIds, onFlash }: OrdersTableProps) {
   const [busy, setBusy] = useState<string | null>(null);
 
   async function setStatus(id: string, status: Order['status']) {
@@ -485,6 +531,24 @@ function OrdersTable() {
       await updateOrderStatus(id, status);
     } catch (err) {
       console.error(err);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** « Livrée » : passage comptoir + crédit fidélité auto pour le web. */
+  async function handleDeliver(o: Order) {
+    setBusy(o.id);
+    try {
+      const pts = await deliverOrderAndCredit(o);
+      onFlash(
+        pts > 0
+          ? `Commande ${o.reference ?? o.id.slice(0, 8)} livrée · ${pts} pts fidélité crédités.`
+          : `Commande ${o.reference ?? o.id.slice(0, 8)} livrée.`,
+      );
+    } catch (err) {
+      console.error(err);
+      onFlash('Échec du passage en « livrée ».');
     } finally {
       setBusy(null);
     }
@@ -508,6 +572,7 @@ function OrdersTable() {
           <th>Réf</th>
           <th>Client</th>
           <th>Articles</th>
+          <th>Retrait</th>
           <th>Total</th>
           <th>Heure</th>
           <th>Statut</th>
@@ -515,45 +580,84 @@ function OrdersTable() {
         </tr>
       </thead>
       <tbody>
-        {orders.map((o) => (
-          <tr key={o.id} className={o.status === 'livree' ? 'is-hidden' : ''}>
-            <td className="cell-price">{o.reference ?? o.id.slice(0, 8)}</td>
-            <td>
-              <strong>{o.customerName ?? '—'}</strong>
-              {o.customerPhone && <small> {o.customerPhone}</small>}
-            </td>
-            <td>
-              {(o.items ?? [])
-                .map((it) => `${it.qty}× ${it.name}`)
-                .join(', ') || '—'}
-            </td>
-            <td className="cell-price">{formatPrice(o.total ?? 0)}</td>
-            <td className="cell-price">
-              {o.createdAt ? new Date(o.createdAt).toLocaleTimeString('fr-FR') : '—'}
-            </td>
-            <td>
-              <span className={`admin-pill ${o.status === 'nouvelle' ? 'on' : 'off'}`}>
-                {ORDER_STATUS_LABELS[o.status] ?? o.status}
-              </span>
-            </td>
-            <td className="cell-actions">
-              <button
-                className="admin-btn ghost sm"
-                disabled={busy === o.id}
-                onClick={() => setStatus(o.id, o.status === 'nouvelle' ? 'en_cours' : 'prete')}
-              >
-                {o.status === 'nouvelle' ? 'Préparer' : 'Prête'}
-              </button>
-              <button
-                className="admin-btn danger sm"
-                disabled={busy === o.id}
-                onClick={() => setStatus(o.id, 'livree')}
-              >
-                Livrée
-              </button>
-            </td>
-          </tr>
-        ))}
+        {orders.map((o) => {
+          // Contrôle anti-fraude : total recalculé contre la carte courante.
+          const check = o.channel === 'web' ? checkOrderTotal(o, products) : null;
+          const rowClass = [
+            o.status === 'livree' ? 'is-hidden' : '',
+            pendingIds.includes(o.id) ? 'row-new' : '',
+            check && !check.ok ? 'row-warn' : '',
+          ]
+            .filter(Boolean)
+            .join(' ');
+          return (
+            <tr key={o.id} className={rowClass}>
+              <td className="cell-price">
+                <div className="cell-ref">
+                  {o.reference ?? o.id.slice(0, 8)}
+                  <span className={`admin-pill ${o.channel === 'web' ? 'web' : ''}`}>
+                    {o.channel === 'web' ? 'Web' : 'Comptoir'}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <strong>{o.customerName ?? '—'}</strong>
+                {o.customerPhone && <small> {o.customerPhone}</small>}
+                {o.note && <div className="cell-note">⚠ {o.note}</div>}
+              </td>
+              <td className="cell-articles">
+                {(o.items ?? []).map((it, i) => (
+                  <div key={`${o.id}-${i}`} className="cell-article">
+                    <span>
+                      {it.qty}× {it.name}
+                      {it.variant === 'menu' ? ' (menu)' : ''}
+                    </span>
+                    {it.optionsSummary && (
+                      <small className="cell-options">{it.optionsSummary}</small>
+                    )}
+                  </div>
+                )) || '—'}
+              </td>
+              <td className="cell-pickup">
+                {o.pickup ? formatPickup(o.pickup) : '—'}
+              </td>
+              <td className="cell-price">
+                <div className="cell-ref">
+                  {formatPrice(o.total ?? 0)}
+                  {check && !check.ok && (
+                    <span className="admin-pill warn" title={check.issues.join('\n')}>
+                      ≠ vérif. {formatPrice(check.expected)}
+                    </span>
+                  )}
+                </div>
+              </td>
+              <td className="cell-price">
+                {o.createdAt ? new Date(o.createdAt).toLocaleTimeString('fr-FR') : '—'}
+              </td>
+              <td>
+                <span className={`admin-pill ${o.status === 'nouvelle' ? 'on' : 'off'}`}>
+                  {ORDER_STATUS_LABELS[o.status] ?? o.status}
+                </span>
+              </td>
+              <td className="cell-actions">
+                <button
+                  className="admin-btn ghost sm"
+                  disabled={busy === o.id}
+                  onClick={() => setStatus(o.id, o.status === 'nouvelle' ? 'en_cours' : 'prete')}
+                >
+                  {o.status === 'nouvelle' ? 'Préparer' : 'Prête'}
+                </button>
+                <button
+                  className="admin-btn danger sm"
+                  disabled={busy === o.id}
+                  onClick={() => handleDeliver(o)}
+                >
+                  Livrée
+                </button>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

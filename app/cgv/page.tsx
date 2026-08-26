@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/LegalLayout';
+import { LINKS } from '@/lib/links';
 
 export const metadata: Metadata = {
   title: "CGV — O'Snack Torcy",
@@ -55,8 +56,12 @@ export default function CGVPage() {
       <p>La commande peut être passée&nbsp;:</p>
       <ul>
         <li>directement en caisse, sur place&nbsp;;</li>
-        <li>par téléphone au <span className="legal-todo">téléphone à compléter</span>&nbsp;;</li>
-        <li>par le biais du Site ou d&apos;une plateforme de livraison partenaire.</li>
+        <li>par téléphone au {LINKS.phone}&nbsp;;</li>
+        <li>
+          sur le Site (commande en ligne), avec règlement au moment du retrait au
+          restaurant, en espèces ou par carte bancaire&nbsp;;
+        </li>
+        <li>par le biais d&apos;une plateforme de livraison partenaire.</li>
       </ul>
       <p>
         Toute commande vaut acceptation des prix et descriptions des produits tels
@@ -67,7 +72,9 @@ export default function CGVPage() {
 
       <h2>Article 4 — Paiement</h2>
       <p>
-        Le paiement est exigible à la commande. Il peut s&apos;effectuer en espèces, par carte
+        Pour les commandes passées sur le Site, le paiement s&apos;effectue au moment du
+        retrait, en espèces ou par carte bancaire. Pour les commandes passées en caisse ou
+        par téléphone, le paiement est exigible à la commande, en espèces, par carte
         bancaire ou par tout autre moyen accepté par le restaurant. Les sommes encaissées ne
         pourront être considérées comme des arrhes sauf accord contraire exprès.
       </p>

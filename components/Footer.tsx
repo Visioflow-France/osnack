@@ -107,6 +107,7 @@ export function Footer() {
           <ul>
             <li><Link href="/#story" data-cursor-hover>Le Concept</Link></li>
             <li><Link href="/carte" data-cursor-hover>La Carte</Link></li>
+            <li><Link href="/commander" data-cursor-hover>Commander en ligne</Link></li>
             <li><Link href="/histoire" data-cursor-hover>Histoire</Link></li>
             <li><Link href="/#reviews" data-cursor-hover>Avis Clients</Link></li>
             <li><Link href="/#contact" data-cursor-hover>Nous Trouver</Link></li>

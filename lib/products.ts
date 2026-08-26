@@ -39,7 +39,24 @@ export interface OrderItem {
   productId: string;
   name: string;
   qty: number;
+  /** Prix UNITAIRE, options incluses (sémantique inchangée). */
   price: number;
+  /** Présent si l'article est commandé en formule menu (priceMenu). */
+  variant?: 'menu';
+  /** Résumé lisible des options (« Menu · Tortillas · + Bacon »). */
+  optionsSummary?: string;
+  /** Options structurées, pour le re-calcul admin anti-fraude. */
+  options?: { label: string; price: number }[];
+}
+
+/** Canal d'origine d'une commande — absent = comptoir (commandes historiques). */
+export type OrderChannel = 'web' | 'comptoir';
+
+/** Modalité de retrait d'une commande web. */
+export interface OrderPickup {
+  mode: 'asap' | 'scheduled';
+  /** ms epoch du créneau (mode scheduled uniquement). */
+  at?: number;
 }
 
 export interface Order {
@@ -47,10 +64,19 @@ export interface Order {
   reference: string;
   /** 'nouvelle' | 'en_cours' | 'prete' | 'livree' | 'annulee' */
   status: string;
+  /** Absent = 'comptoir' (rétro-compatible avec les commandes existantes). */
+  channel?: OrderChannel;
+  pickup?: OrderPickup;
   customerName?: string;
   customerPhone?: string;
-  /** Email du compte fidélité (recherche comptoir). */
+  /** Email du compte fidélité (recherche comptoir / commande web liée). */
   customerEmail?: string;
+  /** uid Firebase Auth du client connecté (commande web liée au compte). */
+  uid?: string;
+  /** Précisions / allergies saisies par le client (commande web). */
+  note?: string;
+  /** Points fidélité crédités au passage en « livree » (garde anti-double-crédit). */
+  pointsCredited?: number;
   /** True si la commande a été réglée en points de fidélité. */
   paidWithPoints?: boolean;
   items: OrderItem[];

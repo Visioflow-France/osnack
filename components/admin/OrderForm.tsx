@@ -150,6 +150,7 @@ export function OrderForm({ products, onClose, onSaved }: Props) {
       await createOrder({
         reference,
         status: 'nouvelle',
+        channel: 'comptoir',
         customerEmail: email.trim() || undefined,
         items,
         total: Math.round(total * 100) / 100,

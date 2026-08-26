@@ -3,6 +3,7 @@ import { Montserrat, Inter, IBM_Plex_Mono } from 'next/font/google';
 import { SmoothScrollProvider } from '@/components/SmoothScrollProvider';
 import { ParticleFieldClient } from '@/components/ParticleFieldClient';
 import { AuthProvider } from '@/components/AuthContext';
+import { CartProvider } from '@/components/CartContext';
 import './globals.css';
 
 const montserrat = Montserrat({
@@ -56,10 +57,12 @@ export default function RootLayout({
         </svg>
 
         <AuthProvider>
-          <SmoothScrollProvider>
-            <ParticleFieldClient />
-            {children}
-          </SmoothScrollProvider>
+          <CartProvider>
+            <SmoothScrollProvider>
+              <ParticleFieldClient />
+              {children}
+            </SmoothScrollProvider>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

@@ -22,12 +22,22 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Menu vitrine : lecture publique (API /api/menu côté serveur, cache ISR),
+    // écriture admin uniquement.
+    match /menu/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ---- Programme fidélité ----
 
-    // Profil fidélité : chaque client ne voit et ne modifie que le sien.
-    // La transaction `redeemCode` (client) y écrit points/updatedAt.
+    // Profil fidélité : chaque client ne voit et ne modifie que le sien
+    // (transaction redeemCode côté client). L'ADMIN écrit aussi pour créditer
+    // automatiquement les points des commandes web à la livraison
+    // (lib/orderDelivery.ts — transaction livree + points).
     match /loyalty_users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if isAdmin()
+                         || (request.auth != null && request.auth.uid == uid);
     }
 
     // Codes : un client authentifié peut lire un code (pour le valider) et
@@ -45,6 +55,103 @@ service cloud.firestore {
         && request.resource.data.points == resource.data.points
         && request.resource.data.code == resource.data.code;
       allow delete: if false; // un code utilisé reste tracé
+    }
+
+    // ---- Commandes (web « payer au retrait » + comptoir) ----
+    //
+    // Lecture / modification / suppression : ADMIN uniquement — aucun suivi
+    // public (la confirmation client est de l'état navigateur), donc zéro
+    // lecture Firestore visiteur.
+    //
+    // Création : admin libre (commandes comptoir / téléphone) OU visiteur
+    // avec un payload web STRICTEMENT validé. Le client n'envoie que des
+    // sélections ; les rules bornent la forme (types, tailles, quantités) —
+    // elles ne peuvent pas recalculer Σ price×qty : le contrôle EXACT du
+    // total est refait côté dashboard admin (lib/orderCheck.ts).
+    match /orders/{id} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if isAdmin()
+        || (
+          request.resource.data.keys().hasOnly([
+            'reference','status','channel','customerName','customerPhone',
+            'customerEmail','uid','pickup','note','items','total','createdAt'
+          ])
+          && request.resource.data.status == 'nouvelle'
+          && request.resource.data.channel == 'web'
+          && request.resource.data.reference is string
+          && request.resource.data.reference.matches('W-[A-Z0-9]{4,8}')
+          && request.resource.data.customerName is string
+          && request.resource.data.customerName.size() >= 1
+          && request.resource.data.customerName.size() <= 40
+          && request.resource.data.customerPhone is string
+          && request.resource.data.customerPhone.matches('[0-9+ .()-]{6,20}')
+          && (!('customerEmail' in request.resource.data)
+              || (request.resource.data.customerEmail is string
+                  && request.resource.data.customerEmail.size() <= 80))
+          && (!('note' in request.resource.data)
+              || (request.resource.data.note is string
+                  && request.resource.data.note.size() <= 300))
+          // uid : absent (invité) OU égal à l'uid authentifié (anti-usurpation).
+          && (
+            (request.auth == null && !('uid' in request.resource.data))
+            || (request.auth != null
+                && 'uid' in request.resource.data
+                && request.resource.data.uid == request.auth.uid)
+          )
+          // Retrait : ASAP (sans date) ou créneau programmé plausible
+          // (entre -15 min et +7 j — tolère l'horloge cliente qui dérive).
+          && request.resource.data.pickup is map
+          && request.resource.data.pickup.keys().hasOnly(['mode','at'])
+          && (
+            (request.resource.data.pickup.mode == 'asap'
+             && !('at' in request.resource.data.pickup))
+            || (request.resource.data.pickup.mode == 'scheduled'
+                && request.resource.data.pickup.at is number
+                && request.resource.data.pickup.at > request.time.toMillis() - 900000
+                && request.resource.data.pickup.at < request.time.toMillis() + 604800000)
+          )
+          // Articles : 1 à 40 lignes, champs bornés.
+          && request.resource.data.items is list
+          && request.resource.data.items.size() >= 1
+          && request.resource.data.items.size() <= 40
+          && request.resource.data.items.all(x,
+               x is map
+               && x.keys().hasOnly(['productId','name','qty','price','variant','options','optionsSummary'])
+               && x.productId is string
+               && x.productId.size() >= 1
+               && x.productId.size() <= 40
+               && x.name is string
+               && x.name.size() >= 1
+               && x.name.size() <= 60
+               && x.qty is int
+               && x.qty >= 1
+               && x.qty <= 30
+               && x.price is number
+               && x.price >= 0
+               && x.price <= 100
+               && (!('variant' in x) || x.variant == 'menu')
+               && (!('optionsSummary' in x)
+                   || (x.optionsSummary is string && x.optionsSummary.size() <= 160))
+               && (!('options' in x)
+                   || (x.options is list
+                       && x.options.size() <= 8
+                       && x.options.all(o,
+                            o is map
+                            && o.keys().hasOnly(['label','price'])
+                            && o.label is string
+                            && o.label.size() <= 60
+                            && o.price is number
+                            && o.price >= 0
+                            && o.price <= 10)))
+             )
+          && request.resource.data.total is number
+          && request.resource.data.total >= 0
+          && request.resource.data.total <= 1000
+          && request.resource.data.createdAt is number
+          && request.resource.data.createdAt > request.time.toMillis() - 600000
+          && request.resource.data.createdAt < request.time.toMillis() + 600000
+        );
     }
 
     // Refuse tout le reste par défaut.

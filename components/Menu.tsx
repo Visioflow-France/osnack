@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   FILTER_LABELS,
   FILTER_NOTES,
@@ -20,6 +21,10 @@ import {
 import { useProducts } from '@/lib/useProducts';
 import { formatPrice } from '@/lib/format';
 import { LINKS } from '@/lib/links';
+import { computeUnitPrice, hasConfigurator } from '@/lib/options';
+import { useCart } from './CartContext';
+import { CartBar } from './cart/CartBar';
+import { ItemConfigurator } from './cart/ItemConfigurator';
 import { Reveal } from './Reveal';
 
 export function Menu() {
@@ -60,8 +65,9 @@ export function Menu() {
           </h2>
           <p className="menu-intro">
             Kebabs et sandwichs au four, burgers du classique au gourmet, crêpes,
-            tex-mex et milkshakes maison. Pour commander, c'est par téléphone ou
-            directement sur place — en ligne uniquement via Uber Eats et Deliveroo.
+            tex-mex et milkshakes maison. Commandez en ligne avec paiement au
+            retrait, par téléphone ou directement sur place — aussi sur Uber Eats
+            et Deliveroo.
           </p>
         </div>
 
@@ -69,11 +75,20 @@ export function Menu() {
           <div className="menu-order-info-main">
             <span className="menu-order-info-eyebrow">Comment commander</span>
             <p className="menu-order-info-text">
-              <strong>Par téléphone</strong> ou <strong>sur place</strong>. La
-              commande en ligne se fait uniquement via Uber Eats &amp; Deliveroo.
+              <strong>En ligne</strong> (paiement au retrait : espèces ou carte),{' '}
+              <strong>par téléphone</strong> ou <strong>sur place</strong> — aussi
+              sur Uber Eats &amp; Deliveroo.
             </p>
           </div>
           <div className="menu-order-info-actions">
+            <Link href="/commander" className="menu-order-info-online" data-cursor-hover>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <circle cx="9" cy="20" r="1.4" />
+                <circle cx="17" cy="20" r="1.4" />
+                <path d="M3 3h2.2l2.2 11.2a1.6 1.6 0 0 0 1.6 1.3h7.6a1.6 1.6 0 0 0 1.6-1.3L20 7H5.4" />
+              </svg>
+              <span>Commander en ligne</span>
+            </Link>
             <a href={LINKS.phoneHref} className="menu-order-info-phone" data-cursor-hover>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
@@ -104,16 +119,21 @@ export function Menu() {
 
         <div className="menu-grid" id="menuGrid">
           {filtered.map((item) => (
-            <MenuCard key={item.id} product={item} />
+            <MenuCard key={item.id} product={item} orderable />
           ))}
         </div>
       </div>
+
+      {/* Retour visuel immédiat du panier, dès le premier article ajouté. */}
+      <CartBar />
     </section>
   );
 }
 
-export function MenuCard({ product }: { product: Product }) {
+export function MenuCard({ product, orderable }: { product: Product; orderable?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const { addLine } = useCart();
+  const [configuring, setConfiguring] = useState(false);
   const promo = hasPromo(product);
   const hasMenu = hasMenuPrice(product);
 
@@ -165,8 +185,35 @@ export function MenuCard({ product }: { product: Product }) {
               <span className="price-menu">Menu {formatPrice(product.priceMenu as number)}</span>
             )}
           </div>
+          {orderable && (
+            <button
+              type="button"
+              className="menu-card-add"
+              onClick={() => {
+                if (hasConfigurator(product)) {
+                  setConfiguring(true); // pain, formule, suppléments, parfum…
+                } else {
+                  // Ajout express : article sans options (crêpe, dessert…).
+                  addLine({
+                    productId: product.id,
+                    productName: product.name,
+                    variant: 'seul',
+                    options: [],
+                    qty: 1,
+                    unitPrice: computeUnitPrice(product, 'seul', []),
+                  });
+                }
+              }}
+            >
+              Ajouter
+            </button>
+          )}
         </div>
       </div>
+
+      {configuring && (
+        <ItemConfigurator product={product} onClose={() => setConfiguring(false)} />
+      )}
     </article>
   );
 }

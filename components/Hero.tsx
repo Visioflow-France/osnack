@@ -7,11 +7,13 @@ import { LINKS } from '@/lib/links';
 import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
 
 // Image de fond du hero, servie de façon responsive via <picture> :
-//  - mobile  (<= 767px) : hero-mobile.webp  (~900px, 22 KB, q92)
+//  - mobile  (<= 767px) : hero-mobile.webp  (1920px, ~64 KB, q90 + unsharp)
 //  - desktop (>= 768px) : hero-desktop.webp (1920px, 66 KB, q92)
-// Régénérées en qualité 92 depuis la source 1920×1080 : netteté nettement
-// meilleure (l'ancienne compression q~60 rendait l'image floue) pour un
-// poids total qui reste très raisonnable.
+// Mobile : pleine résolution de la source (l'ancienne version 900px était
+// étirée ~5× en hauteur par object-fit: cover sur écran portrait, d'où un
+// flou notable) + léger renforcement de netteté qui compense l'agrandissement
+// restant (~2,4×) fait par le navigateur. Cadrage et poids inchangés côté
+// desktop.
 const HERO_IMG_MOBILE = '/hero-mobile.webp';
 const HERO_IMG_DESKTOP = '/hero-desktop.webp';
 

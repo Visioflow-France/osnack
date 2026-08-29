@@ -73,7 +73,7 @@ function NotStaff({ email }: { email: string }) {
         <h1>Accès réservé à l&apos;administration</h1>
         <p>
           Le compte <strong>{email}</strong> est un compte client (fidélité) :
-          il n&apos;a pas accès au dashboard. Ton espace se trouve sur la page
+          il n&apos;a pas accès au dashboard. Votre espace se trouve sur la page
           Mon compte.
         </p>
         <a className="admin-btn solid" href="/compte">

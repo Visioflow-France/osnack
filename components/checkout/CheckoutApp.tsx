@@ -249,7 +249,7 @@ export function CheckoutApp() {
     } catch (err) {
       console.error('[checkout] submit failed:', err);
       setError(
-        "L'envoi a échoué. Vérifie ta connexion puis réessaie — ta commande est intacte.",
+        "L'envoi a échoué. Vérifiez votre connexion puis réessayez — votre commande est intacte.",
       );
     } finally {
       setSubmitting(false);

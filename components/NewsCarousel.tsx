@@ -14,12 +14,12 @@ const SLIDES = [
     href: '/carte',
     image:
       'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=1600&auto=format&fit=crop&q=80',
-    alt: 'Sandwich au four freshly préparé',
+    alt: 'Sandwich au four fraîchement préparé',
     theme: 'light',
   },
   {
     title: 'Burgers gourmands',
-    subtitle: 'Steaks bouchère 150 g, frites Steak House',
+    subtitle: 'Steaks de boucherie 150 g, frites Steak House',
     cta: 'Voir la carte',
     href: '/carte',
     image:

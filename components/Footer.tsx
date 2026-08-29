@@ -129,7 +129,7 @@ export function Footer() {
       <div className="footer-huge">O&apos;SNACK</div>
 
       <div className="footer-bottom">
-        <div>© 2025 O&apos;Snack Torcy — Tous droits réservés</div>
+        <div>© 2026 O&apos;Snack Torcy — Tous droits réservés</div>
         <div style={{ display: 'flex', gap: '1.5rem' }}>
           <Link href="/mentions-legales" data-cursor-hover>Mentions légales</Link>
           <Link href="/cgv" data-cursor-hover>CGV</Link>

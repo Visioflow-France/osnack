@@ -15,7 +15,7 @@ export default function ConfidentialitePage() {
 
       <p>
         La société <strong>HBS (EURL)</strong>, exploitant le restaurant{' '}
-        <strong>O&apos;Snack Torcy</strong>, attachée une grande importance à la protection
+        <strong>O&apos;Snack Torcy</strong>, attache une grande importance à la protection
         de la vie privée et au respect du Règlement Général sur la Protection des Données
         (RGPD&nbsp;– Règlement UE 2016/679) et de la loi «&nbsp;Informatique et
         Libertés&nbsp;».

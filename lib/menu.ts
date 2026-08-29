@@ -149,7 +149,7 @@ export const CATEGORY_NOTES: Partial<Record<Category, string>> = {
   sandwichs:
     'Pain au four ou tortillas au choix. Suppléments : Cheddar 0,50 € · Emmental 0,50 € · Boursin 0,80 € · Raclette 0,80 € · Bacon 1,50 €.',
   burgers:
-    'Classiques · 180 g (pain sésame ou sans sésame) · Gourmets (steak bouchère 150 g + frites Steak House).',
+    'Classiques · 180 g (pain sésame ou sans sésame) · Gourmets (steak de boucherie 150 g + frites Steak House).',
   menus: 'Formules complètes à prix doux, pensées pour chaque appétit.',
   crepes: 'Pâte à crêpes maison — salées et sucrées.',
   texmex: 'À partager, avec nos sauces maison.',
@@ -619,7 +619,7 @@ export const MENU: Product[] = [
   {
     id: 'g-original',
     name: 'Burger Original',
-    desc: '1 steak bouchère 150 g, fromage, sauce maison, frites Steak House.',
+    desc: '1 steak de boucherie 150 g, fromage, sauce maison, frites Steak House.',
     price: 10.0,
     priceMenu: 11.5,
     image: IMG.burger2,
@@ -631,7 +631,7 @@ export const MENU: Product[] = [
   {
     id: 'g-raclette',
     name: 'Burger Raclette',
-    desc: '1 steak bouchère 150 g, fromage à raclette, sauce maison, frites Steak House.',
+    desc: '1 steak de boucherie 150 g, fromage à raclette, sauce maison, frites Steak House.',
     price: 11.9,
     priceMenu: 13.4,
     image: IMG.burger3,
@@ -642,7 +642,7 @@ export const MENU: Product[] = [
   {
     id: 'g-bacon-beef',
     name: 'Original Bacon Beef',
-    desc: '1 steak bouchère 150 g, fromage, bacon, sauce maison, frites Steak House.',
+    desc: '1 steak de boucherie 150 g, fromage, bacon, sauce maison, frites Steak House.',
     price: 12.9,
     priceMenu: 14.4,
     image: IMG.burger3,
@@ -653,7 +653,7 @@ export const MENU: Product[] = [
   {
     id: 'g-double-original',
     name: 'Double Original',
-    desc: '2 steaks bouchère, œuf, fromage, sauce maison, frites Steak House.',
+    desc: '2 steaks de boucherie, œuf, fromage, sauce maison, frites Steak House.',
     price: 14.9,
     priceMenu: 16.4,
     image: IMG.burger2,

@@ -340,7 +340,7 @@
     {
       "id": "g-original",
       "name": "Burger Original",
-      "desc": "1 steak bouchère 150 g, fromage, sauce maison, frites Steak House.",
+      "desc": "1 steak de boucherie 150 g, fromage, sauce maison, frites Steak House.",
       "price": 10,
       "priceMenu": 11.5,
       "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
@@ -352,7 +352,7 @@
     {
       "id": "g-raclette",
       "name": "Burger Raclette",
-      "desc": "1 steak bouchère 150 g, fromage à raclette, sauce maison, frites Steak House.",
+      "desc": "1 steak de boucherie 150 g, fromage à raclette, sauce maison, frites Steak House.",
       "price": 11.9,
       "priceMenu": 13.4,
       "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
@@ -363,7 +363,7 @@
     {
       "id": "g-bacon-beef",
       "name": "Original Bacon Beef",
-      "desc": "1 steak bouchère 150 g, fromage, bacon, sauce maison, frites Steak House.",
+      "desc": "1 steak de boucherie 150 g, fromage, bacon, sauce maison, frites Steak House.",
       "price": 12.9,
       "priceMenu": 14.4,
       "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
@@ -374,7 +374,7 @@
     {
       "id": "g-double-original",
       "name": "Double Original",
-      "desc": "2 steaks bouchère, œuf, fromage, sauce maison, frites Steak House.",
+      "desc": "2 steaks de boucherie, œuf, fromage, sauce maison, frites Steak House.",
       "price": 14.9,
       "priceMenu": 16.4,
       "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",

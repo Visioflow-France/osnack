@@ -29,7 +29,7 @@ export default function CGVPage() {
         clients (les «&nbsp;Clients&nbsp;»).
       </p>
       <p>
-        Elles s&apos;appliquent à toutes les ventes effectuées, à l&apos;exclusion de tous
+        Elles s&apos;appliquent à toutes les ventes effectuées, à l&apos;exclusion de toutes
         autres conditions. Le fait de passer commande implique l&apos;acceptation pleine et
         entière des présentes CGV.
       </p>

@@ -3590,13 +3590,13 @@
      resserre le padding haut posé par .section-pad. */
   .carte.section-pad { padding-top: 6.5rem; }
 
-  /* — Bandeau de tuiles carrées : pleine largeur, collant sous la nav — */
-  .carte-bubbles-wrap {
+  /* — Rangée de noms : pleine largeur, collante sous la nav pendant le scroll — */
+  .carte-names-wrap {
     position: sticky;
     top: 4.9rem; /* sous la FloatingNav (fixée à top 1.25rem, ~52 px de haut) */
     z-index: 60;
-    margin: 1.5rem -2rem 0; /* déborde du padding de la section → pleine largeur */
-    padding: 0.85rem 2rem 0.7rem;
+    margin: 0 -2rem; /* déborde du padding de la section → pleine largeur */
+    padding: 0.2rem 2rem;
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 55%, rgba(0, 0, 0, 0.84));
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
@@ -3604,42 +3604,111 @@
     border-bottom: 1px solid var(--line-soft);
   }
 
-  .carte-bubbles {
+  .carte-names {
     display: flex;
-    align-items: flex-start;
-    gap: 1.3rem;
+    align-items: center;
+    gap: 1.5rem;
     overflow-x: auto;
     scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 0.3rem 0.2rem 0.15rem;
+    padding: 0.2rem 0.2rem 0.1rem;
     /* Fondu aux extrémités : signale le défilement horizontal. */
     mask-image: linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
   }
-  .carte-bubbles::-webkit-scrollbar { display: none; }
+  .carte-names::-webkit-scrollbar { display: none; }
 
-  .bubble {
+  .cname {
     flex: 0 0 auto;
     scroll-snap-align: center;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.4rem 0 0.55rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text-soft);
+    transition:
+      color 0.3s var(--ease-quiet),
+      border-color 0.3s var(--ease-quiet);
+  }
+  .cname:hover { color: #fff; }
+  .cname.active { color: #fff; font-weight: 600; border-bottom-color: var(--accent); }
+
+  /* — Sous-catégories : pastilles sous le titre (Crêpes → Salées / Sucrées…) — */
+  .carte-subs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+  }
+  .csub {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+    cursor: pointer;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    transition:
+      color 0.25s var(--ease-quiet),
+      border-color 0.25s var(--ease-quiet),
+      background 0.25s var(--ease-quiet);
+  }
+  .csub:hover { color: #fff; border-color: #fff; }
+  .csub.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  /* — Grosses tuiles catégories (bas de page) : 2 par ligne mobile, 4 desktop — */
+  .carte-tiles-block { margin-top: 4.5rem; }
+  .carte-tiles-eyebrow {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 1.4rem;
+  }
+  .carte-tiles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.1rem 0.9rem;
+  }
+  .ctile {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
+    gap: 0.6rem;
     background: none;
     border: none;
     padding: 0;
     cursor: pointer;
+    text-align: left;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Tuile carrée arrondie (comme burgerking.fr) : la photo remplit tout le
-     carré ; la tuile active porte un anneau orange épais. */
-  .bubble-img {
+  /* Tuile carrée pleine largeur : la photo remplit tout le carré ; la
+     catégorie active porte un anneau orange épais. */
+  .ctile-img {
     position: relative;
-    width: 84px;
-    height: 84px;
-    border-radius: 20px;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    border-radius: 22px;
     overflow: hidden;
     border: 2px solid var(--line);
     background: var(--card-2);
@@ -3648,49 +3717,47 @@
       box-shadow 0.3s var(--ease-quiet),
       transform 0.35s var(--ease-emphasis);
   }
-  .bubble:hover .bubble-img { border-color: #fff; transform: translateY(-2px); }
-  .bubble.active .bubble-img {
+  .ctile:hover .ctile-img { border-color: #fff; transform: translateY(-3px); }
+  .ctile.active .ctile-img {
     border-color: var(--accent);
-    transform: translateY(-3px);
     box-shadow:
       0 0 0 3px var(--accent),
       0 0 0 6px var(--accent-soft),
-      0 12px 26px -10px rgba(255, 107, 26, 0.5);
+      0 14px 30px -12px rgba(255, 107, 26, 0.5);
   }
-  .bubble-count {
+  .ctile-count {
     position: absolute;
-    right: 2px;
-    bottom: 2px;
-    min-width: 19px;
+    right: 8px;
+    bottom: 8px;
+    min-width: 22px;
     text-align: center;
     font-family: var(--font-ibm), monospace;
-    font-size: 0.56rem;
+    font-size: 0.66rem;
     font-weight: 600;
     color: var(--text-soft);
     background: rgba(0, 0, 0, 0.78);
     border: 1px solid var(--line);
     border-radius: 999px;
-    padding: 0.06rem 0.28rem;
+    padding: 0.1rem 0.4rem;
     transition: all 0.3s var(--ease-quiet);
   }
-  .bubble.active .bubble-count {
+  .ctile.active .ctile-count {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--accent-ink);
     font-weight: 700;
   }
-  .bubble-label {
-    font-family: var(--font-ibm), monospace;
-    font-size: 0.62rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
+  .ctile-label {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--text-soft);
-    white-space: nowrap;
     transition: color 0.3s var(--ease-quiet);
   }
-  .bubble:hover .bubble-label { color: #fff; }
-  .bubble.active .bubble-label { color: var(--accent); font-weight: 600; }
+  .ctile:hover .ctile-label { color: #fff; }
+  .ctile.active .ctile-label { color: var(--accent); }
 
   /* — Titre de la catégorie active : gros titre au-dessus de la grille (BK) — */
   .carte-cat-head {
@@ -3713,6 +3780,8 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0.9rem;
     margin-top: 1.5rem;
+    /* Atterre sous la rangée de noms collante lors des clics tuiles/noms. */
+    scroll-margin-top: 8.5rem;
   }
   .carte-empty {
     grid-column: 1 / -1;
@@ -3905,9 +3974,10 @@
 
   /* — Responsive carte — */
   @media (min-width: 700px) {
-    .bubble-img { width: 98px; height: 98px; border-radius: 24px; }
-    .bubble-label { font-size: 0.68rem; }
-    .bubble-count { font-size: 0.62rem; }
+    .cname { font-size: 0.76rem; }
+    .csub { font-size: 0.7rem; }
+    .carte-tiles { grid-template-columns: repeat(4, 1fr); gap: 1.5rem 1.2rem; }
+    .ctile-label { font-size: 0.9rem; }
     .carte-grid { grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
     .pcard-name { font-size: 1.02rem; }
     .pcard-desc { font-size: 0.79rem; }
@@ -3917,7 +3987,7 @@
     .carte-grid { grid-template-columns: repeat(4, 1fr); }
   }
   @media (max-width: 768px) {
-    .carte-bubbles-wrap {
+    .carte-names-wrap {
       top: 3.4rem; /* nav mobile plus compacte */
       margin-left: -1.25rem;
       margin-right: -1.25rem;

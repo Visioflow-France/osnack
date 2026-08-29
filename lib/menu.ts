@@ -26,7 +26,7 @@ export interface Product {
   available?: boolean;
   /** Soft toggle: when true the dish is promoted as a "Best Seller" on the vitrine. */
   bestseller?: boolean;
-  /** Soft toggle: when true the dish wears a "Nouveau" badge and feeds the Nouveautés bubble. */
+  /** Soft toggle: when true the dish wears a "Nouveau" badge and feeds the Nouveautés entry. */
   isNew?: boolean;
   /** Sort order (lower first). */
   order?: number;
@@ -83,9 +83,9 @@ export const FILTER_LABELS: Record<Filter, string> = {
 };
 
 /**
- * Ordre d'affichage des tuiles de la carte (façon BK : les vues
- * « merchandising » d'abord — nouveautés, bons plans — puis les familles).
- * Pas de vue « Tout » : comme chez Burger King, la page s'ouvre directement
+ * Ordre d'affichage des catégories (rangée de noms en haut + grosses tuiles
+ * en bas de page). Les vues « merchandising » d'abord — nouveautés, bons
+ * plans — puis les familles. Pas de vue « Tout » : la page s'ouvre directement
  * sur une catégorie (voir `defaultFilter` dans components/Menu.tsx).
  */
 export const MENU_FILTERS: Filter[] = [
@@ -96,10 +96,20 @@ export const MENU_FILTERS: Filter[] = [
   'burgers',
   'poulet',
   'texmex',
-  'crepes-salees',
-  'crepes-sucrees',
+  'crepes',
   'desserts-boissons',
 ];
+
+/**
+ * Sous-catégories d'une catégorie « parente » : affichées en pastilles sous
+ * le titre quand la catégorie est active (ex. la tuile Crêpes ouvre les
+ * sous-vues Salées / Sucrées). Les catégories absentes de cette table mènent
+ * directement à leurs plats.
+ */
+export const FILTER_CHILDREN: Partial<Record<Filter, Filter[]>> = {
+  crepes: ['crepes-salees', 'crepes-sucrees'],
+  'desserts-boissons': ['desserts', 'boissons'],
+};
 
 /** Un crêpe est « sucrée » / « salée » selon son tag (« Sucré(e) » / « Salée »). */
 const isSweetCrepe = (p: Product): boolean => /sucr/i.test(p.tag ?? '');

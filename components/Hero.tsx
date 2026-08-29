@@ -71,11 +71,6 @@ export function Hero() {
           Préparé minute. Dévoré en un instant.
         </p>
         <div className="hero-rule" aria-hidden />
-        <p className="hero-desc">
-          Produits frais sélectionnés chaque matin, pains dorés au four, viandes
-          savoureuses et sauces maison. Une qualité honnête, des portions
-          généreuses — le goût du vrai, sans aucun compromis.
-        </p>
         <div className="hero-ctas">
           <a
             href={LINKS.phoneHref}

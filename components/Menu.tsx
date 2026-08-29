@@ -27,9 +27,9 @@ const filterTitle = (f: Filter): string =>
  * ── Page « Notre Carte » ─────────────────────────────────────────────────────
  *
  * Organisation :
- *   1. Rangée collante de noms : « Accueil » (vue par défaut, aucune catégorie
- *      pré-sélectionnée) puis toutes les catégories — filtrage instantané,
- *      entrée active marquée d'un trait orange.
+ *   1. Rangée de noms (statique, ne suit pas le scroll) : « Accueil » (vue
+ *      par défaut, aucune catégorie pré-sélectionnée) puis toutes les
+ *      catégories — filtrage instantané, entrée active marquée d'un trait orange.
  *   2. Vue « Accueil » : titre « La Carte » + les grosses tuiles catégories
  *      comme contenu principal (pas de plats), 4 par ligne desktop, 2 mobile.
  *   3. Catégorie choisie : titre + note, sous-pastilles quand il y a des
@@ -126,7 +126,7 @@ export function Menu({ initialProducts }: { initialProducts?: Product[] }) {
 
   return (
     <section className="menu carte section-pad" id="menu">
-      {/* Rangée de noms collante sous la nav pendant le scroll. */}
+      {/* Rangée de noms : statique, elle reste à sa place pendant le scroll. */}
       <div className="carte-names-wrap">
         <div className="container">
           <CategoryNames items={names} active={filter} onChange={pick} />

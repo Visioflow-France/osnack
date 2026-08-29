@@ -53,10 +53,6 @@ export function CategoryCarousel() {
             <br />
             la carte.
           </h2>
-          <p className="menu-intro">
-            Sandwichs au four, burgers généreux, tex-mex à partager, crêpes
-            maison, desserts et milkshakes — chaque catégorie a sa gourmandise.
-          </p>
         </div>
       </div>
 

@@ -19,7 +19,8 @@ export default async function CartePage() {
     <>
       <FloatingNav />
       <main>
-        <Menu />
+        {/* Menu servi par le cache ISR : plus aucun fetch client de rattrapage. */}
+        <Menu initialProducts={products} />
       </main>
       <Footer />
     </>

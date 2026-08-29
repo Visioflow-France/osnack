@@ -26,6 +26,8 @@ export interface Product {
   available?: boolean;
   /** Soft toggle: when true the dish is promoted as a "Best Seller" on the vitrine. */
   bestseller?: boolean;
+  /** Soft toggle: when true the dish wears a "Nouveau" badge and feeds the Nouveautés bubble. */
+  isNew?: boolean;
   /** Sort order (lower first). */
   order?: number;
 }
@@ -53,29 +55,45 @@ export const CATEGORIES: (Category | 'all')[] = [
 ];
 
 /**
- * Filtres « virtuels » de la barre de la carte : sous-familles (crêpes salées /
- * sucrées, distinguées par le tag du produit) et regroupement desserts & boissons.
- * Ils ne sont pas des `Category` (le stockage Firestore ne change pas), ce sont
- * des vues supplémentaires proposées au client.
+ * Filtres « virtuels » de la barre de la carte : nouveautés (`isNew`), bons
+ * plans (promos + formules), poulet (mots-clés du nom), sous-familles (crêpes
+ * salées / sucrées, distinguées par le tag du produit) et regroupement
+ * desserts & boissons. Ils ne sont pas des `Category` (le stockage Firestore
+ * ne change pas), ce sont des vues supplémentaires proposées au client.
  */
-export type SpecialFilter = 'crepes-salees' | 'crepes-sucrees' | 'desserts-boissons';
+export type SpecialFilter =
+  | 'nouveautes'
+  | 'bons-plans'
+  | 'poulet'
+  | 'crepes-salees'
+  | 'crepes-sucrees'
+  | 'desserts-boissons';
 
 /** Tout ce que la barre de filtres de la carte peut afficher. */
 export type Filter = Category | 'all' | SpecialFilter;
 
 export const FILTER_LABELS: Record<Filter, string> = {
   ...CATEGORY_LABELS,
+  nouveautes: 'Nouveautés',
+  'bons-plans': 'Bons Plans',
+  poulet: 'Poulet',
   'crepes-salees': 'Crêpes Salées',
   'crepes-sucrees': 'Crêpes Sucrées',
   'desserts-boissons': 'Desserts & Boissons',
 };
 
-/** Ordre d'affichage de la barre de filtres de la carte. */
+/**
+ * Ordre d'affichage des bulles de la carte (façon fast-food : les vues
+ * « merchandising » d'abord — nouveautés, bons plans — puis les familles).
+ */
 export const MENU_FILTERS: Filter[] = [
   'all',
+  'nouveautes',
+  'bons-plans',
+  'menus',
   'sandwichs',
   'burgers',
-  'menus',
+  'poulet',
   'texmex',
   'crepes-salees',
   'crepes-sucrees',
@@ -86,9 +104,15 @@ export const MENU_FILTERS: Filter[] = [
 const isSweetCrepe = (p: Product): boolean => /sucr/i.test(p.tag ?? '');
 const isSavoryCrepe = (p: Product): boolean => /sal/i.test(p.tag ?? '');
 
+/** Bulle « Poulet » : plats de poulet repérés par mots-clés du nom. */
+const POULET_RE = /poulet|chicken|nugget|tender/i;
+
 /** Le produit appartient-il au filtre donné ? */
 export const matchesFilter = (p: Product, filter: Filter): boolean => {
   if (filter === 'all') return true;
+  if (filter === 'nouveautes') return p.isNew === true;
+  if (filter === 'bons-plans') return hasPromo(p) || p.category === 'menus';
+  if (filter === 'poulet') return POULET_RE.test(p.name);
   if (filter === 'crepes-salees') return p.category === 'crepes' && isSavoryCrepe(p);
   if (filter === 'crepes-sucrees') return p.category === 'crepes' && isSweetCrepe(p);
   if (filter === 'desserts-boissons')
@@ -123,6 +147,9 @@ export const CATEGORY_NOTES: Partial<Record<Category, string>> = {
 /** Notes affichées au-dessus de la grille pour chaque filtre de la barre. */
 export const FILTER_NOTES: Partial<Record<Filter, string>> = {
   ...CATEGORY_NOTES,
+  nouveautes: 'Les dernières recettes arrivées chez O’Snack — fraîchement grillées.',
+  'bons-plans': 'Promos du moment et formules complètes à prix doux.',
+  poulet: 'Tout le poulet : burgers panés, nuggets et tenders croustillants.',
   'crepes-salees': 'Pâte à crêpes maison — les salées, généreusement garnies.',
   'crepes-sucrees': 'Pâte à crêpes maison — les sucrées, pour les gourmands.',
   'desserts-boissons':

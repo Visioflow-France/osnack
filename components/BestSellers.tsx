@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { isAvailable, selectBestSellers, type Product } from '@/lib/menu';
 import { useProducts } from '@/lib/useProducts';
 import { Reveal } from './Reveal';
-import { MenuCard } from './Menu';
+import { MenuCard } from './MenuCard';
 
 /**
  * Section "Best Sellers" affichée sur la page vitrine. Ne montre que 3 plats

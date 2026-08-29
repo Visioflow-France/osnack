@@ -1,36 +1,44 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   FILTER_LABELS,
   FILTER_NOTES,
   MENU_FILTERS,
   countByFilter,
-  effectivePrice,
-  hasMenuPrice,
-  hasPromo,
   isAvailable,
   isFilter,
   matchesFilter,
-  promoPercent,
-  type Product,
   type Filter,
+  type Product,
 } from '@/lib/menu';
 import { useProducts } from '@/lib/useProducts';
-import { formatPrice } from '@/lib/format';
 import { LINKS } from '@/lib/links';
-import { computeUnitPrice, hasConfigurator } from '@/lib/options';
-import { useCart } from './CartContext';
 import { CartBar } from './cart/CartBar';
-import { ItemConfigurator } from './cart/ItemConfigurator';
+import { CategoryBubbles, type BubbleItem } from './carte/CategoryBubbles';
+import { ProductCard } from './carte/ProductCard';
 import { Reveal } from './Reveal';
 
-export function Menu() {
+/**
+ * ── Page « Notre Carte » (refonte style Burger King) ─────────────────────────
+ *
+ * Structure :
+ *   1. En-tête éditorial + rappel des canaux de commande (inchangé).
+ *   2. Bandeau de bulles filtrantes (photos circulaires, scroll-snap mobile,
+ *      bulle active recentrée automatiquement) — filtrage instantané, sans
+ *      rechargement.
+ *   3. Grille de cartes produits responsives (2 col. mobile → 4 col. desktop)
+ *      avec badges Nouveau / -% / Top Ventes / Veggie et ajout panier express.
+ *
+ * La logique métier est conservée : menu chargé une seul fois (ISR serveur,
+ * fetch de rattrapage sinon), panier via CartContext + ItemConfigurator,
+ * filtre posable par l'URL (`/carte?cat=burgers`, boutons « Découvrir »).
+ */
+export function Menu({ initialProducts }: { initialProducts?: Product[] }) {
   const [filter, setFilter] = useState<Filter>('all');
   // Menu chargé une seule fois (props serveur ISR) — aucun polling Firestore.
-  const { products } = useProducts();
+  const { products } = useProducts(initialProducts);
 
   // Hide dishes the admin has toggled off (soft remove). Deletion is permanent.
   const visible = useMemo(() => products.filter(isAvailable), [products]);
@@ -39,6 +47,21 @@ export function Menu() {
     () => visible.filter((p) => matchesFilter(p, filter)),
     [filter, visible],
   );
+
+  // Données du bandeau de bulles : une bulle par filtre, photo de couverture =
+  // image du 1er plat du filtre (auto-maintenue quand l'admin change la carte).
+  // La bulle « Nouveautés » n'apparaît que si au moins un plat est marqué neuf.
+  const bubbles = useMemo<BubbleItem[]>(() => {
+    const out: BubbleItem[] = [];
+    for (const f of MENU_FILTERS) {
+      const count = countByFilter(f, visible);
+      if (f === 'nouveautes' && count === 0) continue;
+      const cover = visible.find((p) => matchesFilter(p, f))?.image;
+      if (!cover) continue;
+      out.push({ id: f, label: FILTER_LABELS[f], count, image: cover });
+    }
+    return out;
+  }, [visible]);
 
   // Filtre posé via l'URL (`/carte?cat=burgers`) par les boutons « Découvrir »
   // de la page d'accueil : active le filtre puis amène à la grille.
@@ -53,7 +76,7 @@ export function Menu() {
   }, []);
 
   return (
-    <section className="menu section-pad" id="menu">
+    <section className="menu carte section-pad" id="menu">
       <div className="container">
         <Reveal className="section-label" as="div">Notre Carte</Reveal>
 
@@ -100,120 +123,36 @@ export function Menu() {
             </span>
           </div>
         </div>
+      </div>
 
-        <div className="filters" id="filters">
-          {MENU_FILTERS.map((cat) => (
-            <button
-              key={cat}
-              className={`filter-btn ${filter === cat ? 'active' : ''}`}
-              onClick={() => setFilter(cat)}
-            >
-              {FILTER_LABELS[cat]} <span className="count">({countByFilter(cat, visible)})</span>
-            </button>
-          ))}
+      {/* Bandeau bulles collant sous la nav pendant le défilement (style BK). */}
+      <div className="carte-bubbles-wrap">
+        <div className="container">
+          <CategoryBubbles items={bubbles} active={filter} onChange={setFilter} />
         </div>
+      </div>
 
-        {filter !== 'all' && FILTER_NOTES[filter] && (
-          <p className="menu-cat-note">{FILTER_NOTES[filter]}</p>
+      <div className="container">
+        {FILTER_NOTES[filter] && (
+          <p className="menu-cat-note" aria-live="polite">{FILTER_NOTES[filter]}</p>
         )}
 
-        <div className="menu-grid" id="menuGrid">
-          {filtered.map((item) => (
-            <MenuCard key={item.id} product={item} orderable />
-          ))}
+        {/* key={filter} : la grille se ré-anime en cascade à chaque filtre. */}
+        <div className="carte-grid" id="menuGrid" key={filter}>
+          {filtered.length === 0 ? (
+            <div className="carte-empty">
+              Aucun plat dans cette catégorie pour le moment — revenez bientôt.
+            </div>
+          ) : (
+            filtered.map((item, i) => (
+              <ProductCard key={item.id} product={item} index={i} />)
+            )
+          )}
         </div>
       </div>
 
       {/* Retour visuel immédiat du panier, dès le premier article ajouté. */}
       <CartBar />
     </section>
-  );
-}
-
-export function MenuCard({ product, orderable }: { product: Product; orderable?: boolean }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { addLine } = useCart();
-  const [configuring, setConfiguring] = useState(false);
-  const promo = hasPromo(product);
-  const hasMenu = hasMenuPrice(product);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            el.classList.add('is-visible');
-            observer.disconnect();
-          }
-        });
-      },
-      { threshold: 0.1 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <article className="menu-card" ref={ref}>
-      <div className="menu-card-img">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
-        />
-        {product.tag && <div className="menu-card-tag">{product.tag}</div>}
-        {promo && (
-          <div className="menu-card-tag promo">-{promoPercent(product)} %</div>
-        )}
-      </div>
-      <div className="menu-card-body">
-        <h3 className="menu-card-name">{product.name}</h3>
-        <p className="menu-card-desc">{product.desc}</p>
-        {product.note && <p className="menu-card-note">{product.note}</p>}
-        <div className="menu-card-footer">
-          <div className={`menu-card-price ${promo ? 'is-promo' : ''} ${hasMenu ? 'has-menu' : ''}`}>
-            <span className="price-main">
-              {promo && <span className="price-old">{formatPrice(product.price)}</span>}
-              <span className="price-now">
-                {formatPrice(effectivePrice(product))}
-              </span>
-            </span>
-            {hasMenu && (
-              <span className="price-menu">Menu {formatPrice(product.priceMenu as number)}</span>
-            )}
-          </div>
-          {orderable && (
-            <button
-              type="button"
-              className="menu-card-add"
-              onClick={() => {
-                if (hasConfigurator(product)) {
-                  setConfiguring(true); // pain, formule, suppléments, parfum…
-                } else {
-                  // Ajout express : article sans options (crêpe, dessert…).
-                  addLine({
-                    productId: product.id,
-                    productName: product.name,
-                    variant: 'seul',
-                    options: [],
-                    qty: 1,
-                    unitPrice: computeUnitPrice(product, 'seul', []),
-                  });
-                }
-              }}
-            >
-              Ajouter
-            </button>
-          )}
-        </div>
-      </div>
-
-      {configuring && (
-        <ItemConfigurator product={product} onClose={() => setConfiguring(false)} />
-      )}
-    </article>
   );
 }

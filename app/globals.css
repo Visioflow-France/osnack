@@ -2846,7 +2846,7 @@
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }
-    .reveal, .menu-card { opacity: 1; transform: none; }
+    .reveal, .menu-card, .pcard { opacity: 1; transform: none; }
     .manifesto .word { opacity: 1; filter: none; }
     .story-img { opacity: 1; }
   }
@@ -3654,5 +3654,341 @@
   .admin-table .cell-code {
     font-family: var(--font-ibm), monospace;
     letter-spacing: 0.08em;
+  }
+
+  /* ============ CARTE — BULLES & CARTES PRODUITS (refonte style BK) ============ */
+  /* Accent chaud réservé à la page Carte : états actifs, badges, CTA. Le reste
+     du site reste strictement noir & blanc. */
+  .carte {
+    --accent: #ff6b1a;
+    --accent-ink: #160800;
+    --accent-soft: rgba(255, 107, 26, 0.16);
+  }
+
+  /* — Bandeau bulles : pleine largeur, collant sous la nav pendant le scroll — */
+  .carte-bubbles-wrap {
+    position: sticky;
+    top: 4.9rem; /* sous la FloatingNav (fixée à top 1.25rem, ~52 px de haut) */
+    z-index: 60;
+    margin: 1.5rem -2rem 0; /* déborde du padding de la section → pleine largeur */
+    padding: 0.85rem 2rem 0.7rem;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95) 55%, rgba(0, 0, 0, 0.84));
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .carte-bubbles {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.3rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0.3rem 0.2rem 0.15rem;
+    /* Fondu aux extrémités : signale le défilement horizontal. */
+    mask-image: linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 22px, #000 calc(100% - 22px), transparent 100%);
+  }
+  .carte-bubbles::-webkit-scrollbar { display: none; }
+
+  .bubble {
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bubble-img {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--line);
+    background: var(--card-2);
+    transition:
+      border-color 0.3s var(--ease-quiet),
+      box-shadow 0.3s var(--ease-quiet),
+      transform 0.35s var(--ease-emphasis);
+  }
+  .bubble:hover .bubble-img { border-color: #fff; transform: translateY(-2px); }
+  .bubble.active .bubble-img {
+    border: 3px solid var(--accent);
+    transform: translateY(-3px);
+    box-shadow:
+      0 0 0 4px var(--accent-soft),
+      0 12px 26px -10px rgba(255, 107, 26, 0.5);
+  }
+  .bubble-count {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    min-width: 19px;
+    text-align: center;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.56rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.06rem 0.28rem;
+    transition: all 0.3s var(--ease-quiet);
+  }
+  .bubble.active .bubble-count {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+  }
+  .bubble-label {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    white-space: nowrap;
+    transition: color 0.3s var(--ease-quiet);
+  }
+  .bubble:hover .bubble-label,
+  .bubble.active .bubble-label { color: #fff; }
+  .bubble.active .bubble-label { font-weight: 600; }
+
+  /* — Grille produits : 2 colonnes mobile → 3 tablette → 4 desktop — */
+  .carte-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+    margin-top: 2rem;
+  }
+  .carte-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    border: 1px dashed var(--line);
+    border-radius: 18px;
+    color: var(--text-soft);
+    font-size: 0.95rem;
+  }
+
+  .pcard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--card);
+    border: 1px solid var(--line-soft);
+    border-radius: 20px;
+    overflow: hidden;
+    animation: pcard-in 0.55s var(--ease-quiet) both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+    transition:
+      transform 0.35s var(--ease-emphasis),
+      border-color 0.35s var(--ease-quiet),
+      box-shadow 0.35s var(--ease-quiet);
+  }
+  @keyframes pcard-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .pcard:hover {
+    transform: translateY(-4px);
+    border-color: var(--line);
+    box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.9);
+  }
+
+  /* Image : fond neutre chaud + halo léger ; la photo s'étire au survol. */
+  .pcard-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background:
+      radial-gradient(130% 100% at 50% 0%, var(--accent-soft) 0%, transparent 58%),
+      linear-gradient(180deg, #17130f 0%, #100d0b 100%);
+  }
+  .pcard-media::after {
+    /* fin voile haut : assoit les badges sur la photo */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), transparent 36%);
+    pointer-events: none;
+  }
+  .pcard-img { transition: transform 0.6s var(--ease-quiet); }
+  .pcard:hover .pcard-img { transform: scale(1.06); }
+
+  /* Badges empilés en haut à gauche (Nouveau / -% / Top Ventes / Veggie). */
+  .pcard-badges {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+  .pcard-badge {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.56rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.72);
+    border: 1px solid var(--line);
+    color: #fff;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .pcard-badge.is-new { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .pcard-badge.is-promo { background: #fff; border-color: #fff; color: #000; font-weight: 700; }
+  .pcard-badge.is-top { background: var(--accent-soft); border-color: rgba(255, 107, 26, 0.55); color: #ffb37c; }
+  .pcard-badge.is-veggie { background: rgba(74, 222, 128, 0.14); border-color: rgba(74, 222, 128, 0.5); color: #86efac; }
+
+  /* Tag série (Gourmet, Hummer, 180 g, Salée…) en haut à droite. */
+  .pcard-tag {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 2;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.56rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 0.24rem 0.55rem;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* Corps de carte. */
+  .pcard-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.85rem 0.9rem 0.4rem;
+    flex: 1;
+  }
+  .pcard-name {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+  .pcard-desc {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--text-soft);
+  }
+  .pcard-note {
+    font-size: 0.68rem;
+    color: var(--text-mute);
+    font-style: italic;
+  }
+
+  /* Pied de carte : prix à gauche, ajout à droite (pleine largeur sur mobile
+     pour une grande zone tactile, côte à côte dès la tablette). */
+  .pcard-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.55rem;
+    padding: 0.6rem 0.9rem 0.9rem;
+  }
+  .pcard-price {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+  .pcard-price .price-old {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.66rem;
+    color: var(--text-mute);
+    text-decoration: line-through;
+  }
+  .pcard-price .price-now {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 800;
+    font-size: 1.18rem;
+    letter-spacing: -0.01em;
+  }
+  .pcard-price .price-menu {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    color: var(--text-soft);
+  }
+  .pcard-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    flex: 1 1 auto; /* mobile : bouton pleine largeur sous le prix */
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 0.72rem 1rem;
+    min-height: 44px; /* cible tactile confortable */
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 10px 22px -12px rgba(255, 107, 26, 0.65);
+    transition:
+      transform 0.25s var(--ease-emphasis),
+      box-shadow 0.25s var(--ease-quiet),
+      background 0.25s var(--ease-quiet);
+  }
+  .pcard-add:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 28px -12px rgba(255, 107, 26, 0.8);
+  }
+  .pcard-add:active { transform: scale(0.94); }
+  .pcard-add svg { width: 13px; height: 13px; }
+
+  /* — Responsive carte — */
+  @media (min-width: 700px) {
+    .bubble-img { width: 78px; height: 78px; }
+    .bubble-label { font-size: 0.68rem; }
+    .bubble-count { font-size: 0.62rem; }
+    .carte-grid { grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+    .pcard-name { font-size: 1.02rem; }
+    .pcard-desc { font-size: 0.79rem; }
+    .pcard-add { flex: 0 0 auto; min-height: 40px; }
+  }
+  @media (min-width: 1150px) {
+    .carte-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .carte-bubbles-wrap {
+      top: 3.4rem; /* nav mobile plus compacte */
+      margin-left: -1.25rem;
+      margin-right: -1.25rem;
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
   }
 

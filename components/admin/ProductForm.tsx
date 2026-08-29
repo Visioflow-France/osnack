@@ -44,6 +44,7 @@ export function ProductForm({ initial, onClose }: Props) {
   const [note, setNote] = useState(initial?.note ?? '');
   const [available, setAvailable] = useState(initial?.available !== false);
   const [bestseller, setBestseller] = useState(initial?.bestseller === true);
+  const [isNew, setIsNew] = useState(initial?.isNew === true);
   const [order, setOrder] = useState(initial?.order != null ? String(initial.order) : '');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -110,6 +111,7 @@ export function ProductForm({ initial, onClose }: Props) {
       note: note.trim() || undefined,
       available,
       bestseller,
+      isNew,
       order: order.trim() === '' ? undefined : Number(order),
     };
 
@@ -322,6 +324,15 @@ export function ProductForm({ initial, onClose }: Props) {
                 onChange={(e) => setBestseller(e.target.checked)}
               />
               <span>★ Best Seller (page d&apos;accueil)</span>
+            </label>
+
+            <label className="admin-check">
+              <input
+                type="checkbox"
+                checked={isNew}
+                onChange={(e) => setIsNew(e.target.checked)}
+              />
+              <span>✦ Nouveauté (badge « Nouveau » + bulle Nouveautés)</span>
             </label>
           </div>
 

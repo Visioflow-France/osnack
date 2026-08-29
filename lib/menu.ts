@@ -83,11 +83,12 @@ export const FILTER_LABELS: Record<Filter, string> = {
 };
 
 /**
- * Ordre d'affichage des bulles de la carte (façon fast-food : les vues
+ * Ordre d'affichage des tuiles de la carte (façon BK : les vues
  * « merchandising » d'abord — nouveautés, bons plans — puis les familles).
+ * Pas de vue « Tout » : comme chez Burger King, la page s'ouvre directement
+ * sur une catégorie (voir `defaultFilter` dans components/Menu.tsx).
  */
 export const MENU_FILTERS: Filter[] = [
-  'all',
   'nouveautes',
   'bons-plans',
   'menus',

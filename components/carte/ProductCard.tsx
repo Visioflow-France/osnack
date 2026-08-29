@@ -19,9 +19,10 @@ import { ItemConfigurator } from '../cart/ItemConfigurator';
  *
  * Image mise en valeur sur fond chaud neutre, badges en haut à gauche
  * (Nouveau / -% / Top Ventes / Veggie), tag série en haut à droite, titre
- * impactant, description, prix (promo barrée + prix menu) et bouton d'ajout.
- * La logique panier est celle de l'ex-MenuCard : ajout express sans options,
- * ouverture de l'ItemConfigurator sinon (pain, formule, suppléments…).
+ * impactant, description, prix (promo barrée + prix menu) et pastille ronde
+ * « + » d'ajout rapide (geste Burger King). La logique panier est celle de
+ * l'ex-MenuCard : ajout express sans options, ouverture de l'ItemConfigurator
+ * sinon (pain, formule, suppléments…).
  */
 
 /** Badge « végétarien » détecté depuis le tag du produit (« Végé », « Veggie »…). */
@@ -102,19 +103,26 @@ export function ProductCard({
             </span>
           )}
         </div>
-        <button type="button" className="pcard-add" onClick={handleAdd}>
+        {/* Pastille ronde « + » façon BK : ajout express ou ouverture du
+            configurateur selon le plat (libellé complet pour les lecteurs
+            d'écran, le bouton n'affiche que le signe). */}
+        <button
+          type="button"
+          className="pcard-add"
+          onClick={handleAdd}
+          aria-label={`Ajouter ${product.name} au panier`}
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth={2.4}
+            strokeWidth={2.6}
             strokeLinecap="round"
             aria-hidden
           >
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Ajouter
         </button>
       </div>
 

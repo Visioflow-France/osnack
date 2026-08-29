@@ -5,12 +5,14 @@ import Image from 'next/image';
 import type { Filter } from '@/lib/menu';
 
 /**
- * ── Bandeau « bulles » de la carte (inspiré Burger King) ─────────────────────
+ * ── Bandeau de tuiles de la carte (organisation Burger King) ─────────────────
  *
- * Rangée horizontale de filtres visuels : photo circulaire + libellé + nombre
- * de plats. Défilable au doigt sur mobile (scroll-snap, barre masquée) et à
- * la molette/trackpad sur desktop. La bulle active est automatiquement
- * recentrée dans le bandeau (sans toucher au défilement vertical de la page).
+ * Rangée horizontale de filtres visuels : tuiles carrées arrondies (photo
+ * plein cadre, anneau orange sur la tuile active), libellé dessous et nombre
+ * de plats en pastille. Défilable au doigt sur mobile (scroll-snap, barre
+ * masquée) et à la molette/trackpad sur desktop. La tuile active est
+ * automatiquement recentrée dans le bandeau (sans toucher au défilement
+ * vertical de la page).
  */
 
 export interface BubbleItem {
@@ -67,7 +69,7 @@ export function CategoryBubbles({ items, active, onChange }: Props) {
             onClick={() => onChange(b.id)}
           >
             <span className="bubble-img">
-              <Image src={b.image} alt="" fill sizes="96px" />
+              <Image src={b.image} alt="" fill sizes="128px" />
               <span className="bubble-count">{b.count}</span>
             </span>
             <span className="bubble-label">{b.label}</span>

@@ -3675,8 +3675,10 @@
     font-weight: 600;
   }
 
-  /* — Grosses tuiles catégories (bas de page) : 2 par ligne mobile, 4 desktop — */
+  /* — Grosses tuiles catégories : 2 par ligne mobile, 4 desktop — */
   .carte-tiles-block { margin-top: 4.5rem; }
+  /* Vue « Accueil » : les tuiles sont le contenu principal, collées au titre. */
+  .carte-tiles-hero { margin-top: 1.5rem; scroll-margin-top: 8.5rem; }
   .carte-tiles-eyebrow {
     font-family: var(--font-ibm), monospace;
     font-size: 0.72rem;

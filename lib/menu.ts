@@ -33,7 +33,7 @@ export interface Product {
 }
 
 export const CATEGORY_LABELS: Record<Category | 'all', string> = {
-  all: 'Tout',
+  all: 'Accueil', // vue par défaut de la carte : aucune catégorie pré-sélectionnée
   sandwichs: 'Sandwichs',
   burgers: 'Burgers',
   menus: 'Menus',
@@ -83,12 +83,14 @@ export const FILTER_LABELS: Record<Filter, string> = {
 };
 
 /**
- * Ordre d'affichage des catégories (rangée de noms en haut + grosses tuiles
- * en bas de page). Les vues « merchandising » d'abord — nouveautés, bons
- * plans — puis les familles. Pas de vue « Tout » : la page s'ouvre directement
- * sur une catégorie (voir `defaultFilter` dans components/Menu.tsx).
+ * Ordre d'affichage des entrées de la carte. « Accueil » (`all`) en premier :
+ * vue par défaut, sans catégorie pré-sélectionnée — elle montre les grosses
+ * tuiles, pas de plats. Puis les vues « merchandising » (nouveautés, bons
+ * plans) et les familles. « Accueil » n'apparaît que dans la rangée de noms,
+ * pas parmi les tuiles.
  */
 export const MENU_FILTERS: Filter[] = [
+  'all',
   'nouveautes',
   'bons-plans',
   'menus',
@@ -158,6 +160,7 @@ export const CATEGORY_NOTES: Partial<Record<Category, string>> = {
 /** Notes affichées au-dessus de la grille pour chaque filtre de la barre. */
 export const FILTER_NOTES: Partial<Record<Filter, string>> = {
   ...CATEGORY_NOTES,
+  all: 'Sandwichs au four, burgers du classique au gourmet, menus, crêpes, tex-mex, desserts et milkshakes maison — choisissez une catégorie pour découvrir les plats.',
   nouveautes: 'Les dernières recettes arrivées chez O’Snack — fraîchement grillées.',
   'bons-plans': 'Promos du moment et formules complètes à prix doux.',
   poulet: 'Tout le poulet : burgers panés, nuggets et tenders croustillants.',

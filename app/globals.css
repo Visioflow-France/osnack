@@ -204,6 +204,72 @@
   .floating-nav-phone:hover { transform: scale(1.04); }
   .floating-nav-phone svg { width: 16px; height: 16px; }
 
+  /* Menu « Commander » : choix du canal (téléphone, site, sur place).
+     Le wrapper .floating-nav-order sert de point d'ancrage au menu déroulant. */
+  .floating-nav-order { position: relative; flex-shrink: 0; }
+  .floating-nav-order-menu {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    z-index: 110;
+    width: min(19rem, calc(100vw - 2rem));
+    padding: 0.45rem;
+    background: rgba(12, 12, 12, 0.92);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 1.4rem;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    animation: floating-nav-order-in 0.35s var(--ease-quiet) both;
+  }
+  @keyframes floating-nav-order-in {
+    from { opacity: 0; transform: translateY(-0.5rem); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .floating-nav-order-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.65rem 0.8rem;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: #fff;
+    transition: background 0.25s var(--ease-quiet);
+  }
+  .floating-nav-order-item:hover { background: rgba(255, 255, 255, 0.07); }
+  .floating-nav-order-icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #fff;
+    color: #000;
+  }
+  .floating-nav-order-icon svg { width: 15px; height: 15px; }
+  .floating-nav-order-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+  }
+  .floating-nav-order-title {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .floating-nav-order-sub {
+    font-size: 0.72rem;
+    color: var(--text-soft);
+  }
+
   /* Pastille panier (n'apparaît qu'au premier article ajouté). */
   .floating-nav-cart {
     position: relative;
@@ -270,8 +336,14 @@
     .floating-nav-cart { width: 28px; height: 28px; }
     .floating-nav-cart svg { width: 13px; height: 13px; }
     .floating-nav-cart-badge { min-width: 14px; height: 14px; font-size: 0.52rem; }
-    .floating-nav-cart ~ .floating-nav-phone span { display: none; }
-    .floating-nav-cart ~ .floating-nav-phone { padding: 0 0.5rem; }
+    .floating-nav-cart ~ .floating-nav-order .floating-nav-phone span { display: none; }
+    .floating-nav-cart ~ .floating-nav-order .floating-nav-phone { padding: 0 0.5rem; }
+
+    /* Menu « Commander » : légèrement resserré pour rester dans l'écran. */
+    .floating-nav-order-menu {
+      width: min(16.5rem, calc(100vw - 1.5rem));
+      top: calc(100% + 0.55rem);
+    }
   }
 
   /* ============ HERO ============ */

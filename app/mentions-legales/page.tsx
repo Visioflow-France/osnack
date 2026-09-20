@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/LegalLayout';
 
 export const metadata: Metadata = {
-  title: "Mentions légales — O'Snack Torcy",
+  title: "Mentions légales",
   description:
     "Mentions légales du site O'Snack Torcy : éditeur (HBS EURL), directeur de la publication, hébergeur et propriété intellectuelle.",
 };
@@ -24,7 +24,7 @@ export default function MentionsLegalesPage() {
         <dt>Forme juridique</dt>
         <dd>Entreprise unipersonnelle à responsabilité limitée (EURL)</dd>
         <dt>Siège social</dt>
-        <dd>57 rue de Paris, 77220 Torcy, France</dd>
+        <dd>57 rue de Paris, 77200 Torcy, France</dd>
         <dt>Capital social</dt>
         <dd>1 000,00&nbsp;€</dd>
         <dt>SIREN</dt>

@@ -136,7 +136,16 @@ export function Menu({ initialProducts }: { initialProducts?: Product[] }) {
       <div className="container">
         {/* key={filter} : le titre et la grille se ré-animent à chaque filtre. */}
         <header className="carte-cat-head" aria-live="polite" key={filter}>
-          <h1 className="carte-cat-title">{filterTitle(filter)}</h1>
+          <h1 className="carte-cat-title">
+            {filter === 'all' ? 'Notre Carte' : filterTitle(filter)}
+            {filter === 'all' && (
+              <span className="sr-only">
+                {' '}
+                — snack et fast food à Torcy : restauration rapide à emporter ou
+                en livraison
+              </span>
+            )}
+          </h1>
           {FILTER_NOTES[filter] && (
             <p className="menu-cat-note">{FILTER_NOTES[filter]}</p>
           )}

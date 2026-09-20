@@ -13,8 +13,9 @@ export function Footer() {
             TORCY
           </div>
           <p className="tagline">
-            Sandwichs au four &amp; burgers gourmands. Le goût authentique au cœur de
-            Torcy, 7 jours sur 7.
+            Snack et fast food à Torcy : sandwichs au four, burgers gourmands et
+            crêpes maison. Restauration rapide à emporter, sur place ou en
+            livraison, au cœur de Torcy — 7 jours sur 7.
           </p>
           <div className="footer-social">
             <a href={LINKS.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" data-cursor-hover>
@@ -59,7 +60,7 @@ export function Footer() {
         </div>
 
         <div className="footer-col">
-          <h4>Contact</h4>
+          <h2 className="footer-col-title">Contact &amp; localisation à Torcy</h2>
           <ul>
             <li>
               <a
@@ -70,7 +71,7 @@ export function Footer() {
               >
                 57 Rue de Paris
                 <br />
-                77220 Torcy
+                77200 Torcy
               </a>
             </li>
             <li>
@@ -95,7 +96,7 @@ export function Footer() {
         </div>
 
         <div className="footer-col">
-          <h4>Horaires</h4>
+          <h2 className="footer-col-title">Horaires d'ouverture</h2>
           <div className="hours-line"><span className="day">Lun — Dim</span><span className="time">7j/7</span></div>
           <div className="hours-line"><span className="day">Midi</span><span className="time">11h30 — 14h30</span></div>
           <div className="hours-line"><span className="day">Soir</span><span className="time">18h00 — 01h00</span></div>
@@ -103,7 +104,7 @@ export function Footer() {
         </div>
 
         <div className="footer-col">
-          <h4>Navigation</h4>
+          <h2 className="footer-col-title">Navigation</h2>
           <ul>
             <li><Link href="/#story" data-cursor-hover>Le Concept</Link></li>
             <li><Link href="/carte" data-cursor-hover>La Carte</Link></li>

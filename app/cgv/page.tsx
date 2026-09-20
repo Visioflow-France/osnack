@@ -3,7 +3,7 @@ import { LegalLayout } from '@/components/LegalLayout';
 import { LINKS } from '@/lib/links';
 
 export const metadata: Metadata = {
-  title: "CGV — O'Snack Torcy",
+  title: "CGV — Commande en ligne",
   description:
     "Conditions générales de vente (CGV) du restaurant O'Snack Torcy : commandes, prix, paiement, retrait, réclamations.",
 };
@@ -17,7 +17,7 @@ export default function CGVPage() {
       <p className="legal-callout">
         Les présentes Conditions Générales de Vente (CGV) régissent les ventes de produits
         réalisées par <strong>HBS (EURL)</strong>, exploitant le restaurant{' '}
-        <strong>O&apos;Snack Torcy</strong>, 57 rue de Paris, 77220 Torcy, que ce soit sur
+        <strong>O&apos;Snack Torcy</strong>, 57 rue de Paris, 77200 Torcy, que ce soit sur
         place, à emporter (click &amp; collect) ou via le présent Site.
       </p>
 

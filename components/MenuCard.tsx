@@ -49,7 +49,7 @@ export function MenuCard({ product, orderable }: { product: Product; orderable?:
       <div className="menu-card-img">
         <Image
           src={product.image}
-          alt={product.name}
+          alt={`${product.name} — O'Snack Torcy, restauration rapide à emporter`}
           fill
           sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
         />

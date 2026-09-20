@@ -65,7 +65,7 @@ export function ProductCard({
       <div className="pcard-media">
         <Image
           src={product.image}
-          alt={product.name}
+          alt={`${product.name} — snack et fast food O'Snack Torcy`}
           fill
           sizes="(max-width: 700px) 50vw, (max-width: 1150px) 33vw, 25vw"
           className="pcard-img"

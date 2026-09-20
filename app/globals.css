@@ -1183,33 +1183,62 @@
     .news-slide-cta { padding: 0.85rem 1.4rem; }
   }
 
-  /* ============ CARROUSEL CATÉGORIES (« Explorez la carte ») ============
-     Réutilise les primitives .news-* (track, slides, flèches, pastilles) ;
-     .cat-frame les encapsule dans la section. */
-  .cat-carousel {
+  /* ============ GRILLE CATÉGORIES (« Explorez la carte ») ============
+     Gabarit osnackparis.fr : toutes les bulles visibles d'un coup —
+     3 par ligne en desktop, 2 sur mobile. Chaque tuile réutilise les
+     primitives .news-slide (image plein cadre, dégradé sombre, titre,
+     CTA « Découvrir ») redimensionnées pour la grille. */
+  .cat-grid-section {
     background: var(--bg);
     border-top: 1px solid var(--line-soft);
   }
-  .cat-frame {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--line-soft);
-    border-radius: 24px;
-    outline: none;
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
   }
-  /* Ratio plus compact que le carrousel d'actu plein bord. */
-  .cat-frame .news-slide {
-    min-height: clamp(340px, 42vw, 540px);
+  .cat-cell { display: block; }
+  .cat-grid .news-slide {
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--line-soft);
+    border-radius: 20px;
+    transition: transform .35s var(--ease-quiet), box-shadow .35s var(--ease-quiet);
+  }
+  .cat-grid .news-slide:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.35);
+  }
+  .cat-grid .news-slide-content {
+    padding: 1.5rem;
+  }
+  .cat-grid .news-slide-title {
+    font-size: clamp(1.15rem, 2.4vw, 1.9rem);
+    margin-bottom: 0.7rem;
+  }
+  .cat-grid .news-slide-cta {
+    padding: 0.65rem 1.2rem;
+    font-size: 0.68rem;
   }
   @media (max-width: 768px) {
-    .cat-frame .news-slide { min-height: 62vw; }
-    .cat-frame { border-radius: 16px; }
-    .cat-frame .news-controls {
-      bottom: 1rem;
-      right: 1.25rem;
+    .cat-grid {
+      grid-template-columns: repeat(2, 1fr);
       gap: 0.9rem;
     }
-    .cat-frame .news-arrow { width: 38px; height: 38px; }
+    .cat-grid .news-slide {
+      aspect-ratio: 3 / 4;
+      border-radius: 14px;
+    }
+    .cat-grid .news-slide-content { padding: 0.9rem; }
+    .cat-grid .news-slide-title {
+      font-size: clamp(0.95rem, 3.6vw, 1.15rem);
+      margin-bottom: 0.5rem;
+    }
+    .cat-grid .news-slide-cta {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.6rem;
+      gap: 0.45rem;
+    }
   }
 
   /* ============ SECTION BASE ============ */
@@ -1990,7 +2019,7 @@
     .footer-map iframe { height: 280px; }
   }
 
-  .footer-col h4 {
+  .footer-col h2.footer-col-title {
     font-family: var(--font-ibm), monospace;
     font-size: 0.75rem;
     font-weight: 500;
@@ -3978,3 +4007,88 @@
     }
   }
 
+
+  /* ============ ACCESSIBILITÉ / SEO ============ */
+  /* Texte lisible par les lecteurs d'écran et les moteurs (complément sémantique
+     du H1), retiré visuellement sans display:none (indexable + accessible). */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ============ SECTION CONTENU LOCAL SEO (accueil) ============ */
+  .local-seo {
+    background: var(--deep-black);
+    border-top: 1px solid var(--line-soft);
+  }
+  .local-seo-title {
+    font-size: clamp(2rem, 4.5vw, 3.75rem);
+    margin-bottom: 1.75rem;
+  }
+  .local-seo-intro {
+    max-width: 62rem;
+    color: var(--text-soft);
+    font-size: 1.02rem;
+    line-height: 1.7;
+    margin-bottom: 3.5rem;
+  }
+  .local-seo-intro strong { color: var(--text); font-weight: 500; }
+  .local-seo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--line-soft);
+    border: 1px solid var(--line-soft);
+  }
+  .local-seo-block {
+    background: var(--card);
+    padding: 2.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .local-seo-block h3 {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .local-seo-block p {
+    color: var(--text-soft);
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+  .local-seo-block p strong { color: var(--text); font-weight: 500; }
+  .local-seo-link {
+    margin-top: auto;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.35rem;
+    transition: border-color .3s var(--ease-quiet);
+  }
+  .local-seo-link:hover { border-color: var(--text); }
+  .local-seo-link .btn-arrow {
+    display: inline-block;
+    transition: transform .3s var(--ease-quiet);
+  }
+  .local-seo-link:hover .btn-arrow { transform: translateX(4px); }
+
+  @media (max-width: 768px) {
+    .local-seo-grid { grid-template-columns: 1fr; }
+    .local-seo-block { padding: 1.75rem 1.5rem; }
+    .local-seo-intro { margin-bottom: 2.5rem; }
+  }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/LegalLayout';
 
 export const metadata: Metadata = {
-  title: "Politique de confidentialité — O'Snack Torcy",
+  title: "Politique de confidentialité",
   description:
     "Politique de protection des données personnelles (RGPD) du site O'Snack Torcy : données collectées, finalités, droits.",
 };
@@ -27,7 +27,7 @@ export default function ConfidentialitePage() {
         <dt>Entité</dt>
         <dd>HBS — EURL (O&apos;Snack Torcy)</dd>
         <dt>Adresse</dt>
-        <dd>57 rue de Paris, 77220 Torcy, France</dd>
+        <dd>57 rue de Paris, 77200 Torcy, France</dd>
         <dt>Contact</dt>
         <dd>
           <span className="legal-todo">e-mail DPO/contact à compléter</span>

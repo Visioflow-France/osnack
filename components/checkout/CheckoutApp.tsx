@@ -306,7 +306,14 @@ export function CheckoutApp() {
     <section className="checkout section-pad">
       <div className="container checkout-container">
         <Reveal className="section-label" as="div">Commander en ligne</Reveal>
-        <h1 className="section-title">Votre commande.</h1>
+        <h1 className="section-title">
+          Votre commande.
+          <span className="sr-only">
+            {' '}
+            Commande en ligne au snack fast food O'Snack Torcy — à emporter ou
+            en livraison
+          </span>
+        </h1>
         <p className="checkout-lead">
           Composez, choisissez votre heure de retrait, et réglez en espèces ou
           par carte en boutique au moment de la récupération.
@@ -508,7 +515,7 @@ export function CheckoutApp() {
               {submitting ? 'Envoi en cours…' : 'Envoyer ma commande'}
             </button>
             <p className="checkout-pay-note">
-              Paiement en espèces ou par carte au retrait · 57 Rue de Paris, 77220
+              Paiement en espèces ou par carte au retrait · 57 Rue de Paris, 77200
               Torcy · {mode === 'asap'
                 ? `prête dans ~${ASAP_LEAD_MINUTES} min`
                 : slotAt != null
@@ -569,7 +576,7 @@ function Confirmation({
 
       <div className="confirm-pay">
         <strong>À payer au retrait : {formatPrice(data.total)}</strong>
-        <span>En espèces ou par carte bancaire — 57 Rue de Paris, 77220 Torcy</span>
+        <span>En espèces ou par carte bancaire — 57 Rue de Paris, 77200 Torcy</span>
       </div>
 
       <p className="confirm-note">

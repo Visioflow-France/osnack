@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LegalLayout } from '@/components/LegalLayout';
 
 export const metadata: Metadata = {
-  title: "Politique de cookies — O'Snack Torcy",
+  title: "Politique de cookies",
   description:
     "Politique de cookies du site O'Snack Torcy : types de cookies utilisés, finalités, durée de conservation et paramétrage.",
 };

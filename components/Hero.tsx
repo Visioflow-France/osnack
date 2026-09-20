@@ -51,21 +51,31 @@ export function Hero() {
           {/* Bureau — écrans >= 768px : image haute définition (~1600px) */}
           <source media="(min-width: 768px)" srcSet={HERO_IMG_DESKTOP} />
           {/* Mobile — écrans <= 767px : image optimisée (~800px) */}
+          {/* LCP : eager + fetchpriority=high (préchargée dans le <head> du
+              layout) — jamais de lazy-loading sur le visuel du hero. */}
           <img
             src={HERO_IMG_MOBILE}
-            alt="Burger maison O'Snack préparé minute avec des produits frais"
+            alt="Burger maison du snack fast food O'Snack Torcy — restauration rapide au 57 Rue de Paris, 77200"
             className="hero-bg-img"
-            loading="lazy"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
         </picture>
       </div>
       <div className="hero-overlay"></div>
 
       <div className="hero-content">
-        <div className="hero-eyebrow">Sandwichs au four · Burgers maison · Torcy</div>
+        <div className="hero-eyebrow">Snack &amp; fast food à Torcy · Sandwichs au four · Burgers maison</div>
         <h1 className="hero-title" ref={titleRef}>
           <span className="line"><span>O&apos;SNACK</span></span>
           <span className="line"><span>TORCY</span></span>
+          {/* Complément sémantique lu par Google et les lecteurs d'écran,
+              invisible à l'écran pour préserver le design. */}
+          <span className="sr-only">
+            {' '}— snack et fast food à Torcy : restauration rapide à emporter,
+            sur place ou en livraison, 7j/7
+          </span>
         </h1>
         <p className="hero-subtitle">
           Préparé minute. Dévoré en un instant.

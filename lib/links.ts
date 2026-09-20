@@ -1,11 +1,11 @@
 // Liens externes centralisés du restaurant O'Snack Torcy.
 // Modifier ici pour mettre à jour tous les boutons du site en un seul endroit.
 export const LINKS = {
-  address: '57 Rue de Paris, 77220 Torcy',
-  addressQuery: 'https://maps.google.com/?q=57+Rue+de+Paris+77220+Torcy',
+  address: '57 Rue de Paris, 77200 Torcy',
+  addressQuery: 'https://maps.google.com/?q=57+Rue+de+Paris+77200+Torcy',
   // Intégration Google Maps sans clé API (paramètre output=embed)
   mapsEmbed:
-    'https://maps.google.com/maps?q=57%20Rue%20de%20Paris%2C%2077220%20Torcy&z=15&output=embed',
+    'https://maps.google.com/maps?q=57%20Rue%20de%20Paris%2C%2077200%20Torcy&z=15&output=embed',
   phone: '09 88 08 61 25',
   phoneHref: 'tel:0988086125',
 

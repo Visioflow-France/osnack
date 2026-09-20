@@ -63,6 +63,10 @@ export function History() {
             L’Histoire
             <br />
             du <span className="accent">Fast-Food.</span>
+            <span className="sr-only">
+              {' '}
+              — de la street-food au snack O'Snack de Torcy
+            </span>
           </h1>
           <p className="history-lead">
             Manger vite et bien n’est pas une invention moderne. De

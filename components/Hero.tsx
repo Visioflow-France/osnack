@@ -115,7 +115,7 @@ export function Hero() {
             <span>Deliveroo</span>
             <span className="btn-arrow">→</span>
           </a>
-          <Link href="/commander" className="btn" data-cursor-hover>
+          <Link href="/carte" className="btn" data-cursor-hover>
             Commander en ligne <span className="btn-arrow">→</span>
           </Link>
           <Link href="/carte" className="btn" data-cursor-hover>

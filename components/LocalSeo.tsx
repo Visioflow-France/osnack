@@ -70,7 +70,7 @@ export function LocalSeo() {
               et les communes voisines : {SERVICE_AREAS.slice(1, 6).join(', ')}…
               Retrait dès 20 minutes à la boutique.
             </p>
-            <Link href="/commander" className="local-seo-link" data-cursor-hover>
+            <Link href="/carte" className="local-seo-link" data-cursor-hover>
               Commander en ligne <span className="btn-arrow">→</span>
             </Link>
           </article>

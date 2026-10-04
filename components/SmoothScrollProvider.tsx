@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { setLenisInstance } from '@/lib/scrollLock';
+import { setLenisInstance, resetScrollLock } from '@/lib/scrollLock';
 
 /**
  * Sets up Lenis smooth scroll and wires it into the GSAP ticker so that
@@ -17,6 +18,14 @@ import { setLenisInstance } from '@/lib/scrollLock';
  * défilement fluide par défaut.
  */
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
+  // Filet de sécurité anti-page-figée : à chaque changement de page, on
+  // réinitialise le verrou de scroll. Même si un déverrouillage s'était
+  // perdu (état désynchronisé), la navigation rend toujours le scroll.
+  const pathname = usePathname();
+  useEffect(() => {
+    resetScrollLock();
+  }, [pathname]);
+
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     gsap.registerPlugin(ScrollTrigger);

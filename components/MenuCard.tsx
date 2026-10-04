@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   effectivePrice,
-  hasMenuPrice,
   hasPromo,
   promoPercent,
   type Product,
@@ -24,7 +23,6 @@ export function MenuCard({ product, orderable }: { product: Product; orderable?:
   const { addLine } = useCart();
   const [configuring, setConfiguring] = useState(false);
   const promo = hasPromo(product);
-  const hasMenu = hasMenuPrice(product);
 
   useEffect(() => {
     const el = ref.current;
@@ -63,16 +61,15 @@ export function MenuCard({ product, orderable }: { product: Product; orderable?:
         <p className="menu-card-desc">{product.desc}</p>
         {product.note && <p className="menu-card-note">{product.note}</p>}
         <div className="menu-card-footer">
-          <div className={`menu-card-price ${promo ? 'is-promo' : ''} ${hasMenu ? 'has-menu' : ''}`}>
+          {/* Pas de pastille « Menu » : le choix Seul / Menu (et son prix)
+              se fait dans la bulle de configuration à l'ajout au panier. */}
+          <div className={`menu-card-price ${promo ? 'is-promo' : ''}`}>
             <span className="price-main">
               {promo && <span className="price-old">{formatPrice(product.price)}</span>}
               <span className="price-now">
                 {formatPrice(effectivePrice(product))}
               </span>
             </span>
-            {hasMenu && (
-              <span className="price-menu">Menu {formatPrice(product.priceMenu as number)}</span>
-            )}
           </div>
           {orderable && (
             <button

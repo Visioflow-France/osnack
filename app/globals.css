@@ -1584,23 +1584,10 @@
     font-weight: 400;
   }
   .menu-card-price .price-now { color: #fff; }
-  .menu-card-price.has-menu {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.15rem;
-    line-height: 1.1;
-  }
   .menu-card-price .price-main {
     display: inline-flex;
     align-items: baseline;
     gap: 0.5rem;
-  }
-  .menu-card-price .price-menu {
-    font-size: 0.78rem;
-    font-weight: 400;
-    color: var(--text-mute);
-    letter-spacing: 0.02em;
   }
   .menu-card-note {
     font-size: 0.74rem;
@@ -4165,12 +4152,6 @@
     font-weight: 800;
     font-size: 1.18rem;
     letter-spacing: -0.01em;
-  }
-  .pcard-price .price-menu {
-    font-family: var(--font-ibm), monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.05em;
-    color: var(--text-soft);
   }
   /* Pastille ronde « + » (comme BK) : 44 px de cible tactile sur mobile. */
   .pcard-add {

@@ -160,7 +160,10 @@
     gap: 1.75rem;
     list-style: none;
   }
-  .floating-nav-links a {
+  /* Ciblage « > li > a » : seuls les liens directs de la pastille sont stylés.
+     Sans cela, la règle fuit aussi sur les <a> du menu « Commander » (niché
+     dans la même liste) et écrase leur padding/alignement. */
+  .floating-nav-links > li > a {
     color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     font-size: 0.72rem;
@@ -171,8 +174,8 @@
     padding: 0.25rem 0;
     transition: color 0.3s var(--ease-quiet);
   }
-  .floating-nav-links a:hover { color: #fff; }
-  .floating-nav-links a::after {
+  .floating-nav-links > li > a:hover { color: #fff; }
+  .floating-nav-links > li > a::after {
     content: '';
     position: absolute;
     left: 0;
@@ -182,7 +185,7 @@
     background: #fff;
     transition: width 0.35s var(--ease-quiet);
   }
-  .floating-nav-links a:hover::after { width: 100%; }
+  .floating-nav-links > li > a:hover::after { width: 100%; }
   .floating-nav-phone {
     background: #fff;
     color: #000;
@@ -333,7 +336,7 @@
     }
     .floating-nav-brand { font-size: 0.8rem; gap: 0.25rem; }
     .floating-nav-links { gap: 0.95rem; }
-    .floating-nav-links a { font-size: 0.68rem; letter-spacing: 0.1em; padding: 0.2rem 0; }
+    .floating-nav-links > li > a { font-size: 0.68rem; letter-spacing: 0.1em; padding: 0.2rem 0; }
 
     /* Bouton « Commander » réduit pour équilibrer la pastille. */
     .floating-nav-phone {

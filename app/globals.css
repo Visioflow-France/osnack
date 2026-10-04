@@ -204,13 +204,15 @@
   .floating-nav-phone:hover { transform: scale(1.04); }
   .floating-nav-phone svg { width: 16px; height: 16px; }
 
-  /* Menu « Commander » : choix du canal (téléphone, site, sur place).
-     Le wrapper .floating-nav-order sert de point d'ancrage au menu déroulant. */
+  /* Menu « Commander » : choix du canal (téléphone, site, livraison).
+     Le <li> .floating-nav-order sert de point d'ancrage au menu déroulant,
+     centré sous le bouton (placé au milieu de la pastille, après « Carte »). */
   .floating-nav-order { position: relative; flex-shrink: 0; }
   .floating-nav-order-menu {
     position: absolute;
     top: calc(100% + 0.75rem);
-    right: 0;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 110;
     width: min(19rem, calc(100vw - 2rem));
     padding: 0.45rem;
@@ -226,8 +228,8 @@
     animation: floating-nav-order-in 0.35s var(--ease-quiet) both;
   }
   @keyframes floating-nav-order-in {
-    from { opacity: 0; transform: translateY(-0.5rem); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateX(-50%) translateY(-0.5rem); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
   .floating-nav-order-item {
     display: flex;
@@ -308,7 +310,7 @@
 
   @media (max-width: 768px) {
     /* La navbar reste IDENTIQUE au desktop, mais les tailles/espacements sont
-       rééquilibrés pour que « O'SNACK. · Carte · Histoire · Commander » tiennent
+       rééquilibrés pour que « O'SNACK. · Carte · Commander · Compte » tiennent
        sur une ligne dès 320 px tout en restant lisibles et aérés.
        Le label « La Carte » est raccourci en « Carte » côté composant. */
     .floating-nav {
@@ -331,13 +333,14 @@
     }
     .floating-nav-phone svg { width: 12px; height: 12px; }
 
-    /* Panier : pastille compacte ; quand elle est visible, le label du bouton
-       téléphone se retire pour préserver la largeur sur 320 px. */
+    /* Panier : pastille compacte ; quand elle est visible (classe
+       .floating-nav--with-cart sur la nav), le label du bouton « Commander »
+       se retire pour préserver la largeur sur 320 px. */
     .floating-nav-cart { width: 28px; height: 28px; }
     .floating-nav-cart svg { width: 13px; height: 13px; }
     .floating-nav-cart-badge { min-width: 14px; height: 14px; font-size: 0.52rem; }
-    .floating-nav-cart ~ .floating-nav-order .floating-nav-phone span { display: none; }
-    .floating-nav-cart ~ .floating-nav-order .floating-nav-phone { padding: 0 0.5rem; }
+    .floating-nav--with-cart .floating-nav-phone span { display: none; }
+    .floating-nav--with-cart .floating-nav-phone { padding: 0 0.5rem; }
 
     /* Menu « Commander » : légèrement resserré pour rester dans l'écran. */
     .floating-nav-order-menu {

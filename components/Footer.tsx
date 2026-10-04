@@ -134,7 +134,9 @@ export function Footer() {
 
       <div className="footer-bottom">
         <div>© 2026 O&apos;Snack Torcy — Tous droits réservés</div>
-        <div style={{ display: 'flex', gap: '1.5rem' }}>
+        {/* flex-wrap nécessaire : sans lui, la rangée de liens légaux fait
+            ~330 px de large et déborde de l'écran sur les mobiles ≤ 320 px. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
           <Link href="/mentions-legales" data-cursor-hover>Mentions légales</Link>
           <Link href="/cgv" data-cursor-hover>CGV</Link>
           <Link href="/confidentialite" data-cursor-hover>Confidentialité</Link>

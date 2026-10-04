@@ -15,7 +15,16 @@
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
+  /* Anti-défilement latéral : sur mobile (iOS surtout), overflow-x posé sur
+     <body> seul est ignoré — il faut aussi le poser sur <html>. `clip` est
+     préféré à `hidden` (pas de conteneur de scroll créé, position: sticky et
+     défilement Lenis continuent de fonctionner) ; `hidden` sert de fallback
+     pour les navigateurs plus anciens. */
+  html {
+    -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+    overflow-x: clip;
+  }
   body {
     background: var(--bg);
     color: var(--text);
@@ -23,8 +32,16 @@
     font-weight: 400;
     line-height: 1.55;
     overflow-x: hidden;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  /* Écrans tactiles : iOS Safari zoome automatiquement la page au focus d'un
+     champ < 16 px, et la laisse ensuite dézoomée — l'utilisateur peut alors
+     faire glisser la page sur les côtés. On garantit 16 px minimum sur tous
+     les champs de saisie (connexion compte, code fidélité, commande…). */
+  @media (pointer: coarse) {
+    input, textarea, select { font-size: max(16px, 1em); }
   }
   a, button { cursor: pointer; }
   img { display: block; max-width: 100%; }
@@ -950,7 +967,20 @@
     gap: 2rem;
     margin-bottom: 3rem;
   }
-  .account-title { font-size: clamp(1.8rem, 4vw, 3rem); }
+  /* En mobile (flex column + align-items:flex-start), ce wrapper est
+     dimensionné par son contenu (shrink-to-fit) : un prénom/e-mail très long
+     l'élargirait au-delà de l'écran. Plafonné à la largeur du conteneur, le
+     titre qu'il contient peut alors passer à la ligne (overflow-wrap). */
+  .account-head > div { max-width: 100%; }
+  .account-title {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    /* Prénom ou préfixe d'e-mail très long : en mobile, .account-head passe en
+       flex column align-items:flex-start → le titre est dimensionné par son
+       contenu (shrink-to-fit) et peut dépasser l'écran. On le plafonne à la
+       largeur du conteneur et on autorise la coupe des mots très longs. */
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
   .account-logout {
     border: 1px solid var(--line);
     background: transparent;

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from './AuthContext';
 import { useCart } from './CartContext';
 import { LINKS } from '@/lib/links';
+import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
 
 // Barre de navigation flottante (pastille centrée, toujours visible au scroll).
 // Identique sur mobile, tablette et ordinateur : seuls la taille et l'espacement
@@ -41,13 +42,6 @@ export function FloatingNav() {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [orderOpen]);
-
-  // « En livraison » : ouvre Uber Eats et Deliveroo dans deux onglets.
-  const openDeliveryPlatforms = () => {
-    window.open(LINKS.uberEats, '_blank', 'noopener,noreferrer');
-    window.open(LINKS.deliveroo, '_blank', 'noopener,noreferrer');
-    setOrderOpen(false);
-  };
 
   const withCart = ready && count > 0;
 
@@ -128,26 +122,41 @@ export function FloatingNav() {
                 </span>
               </Link>
 
-              <button
-                type="button"
+              <a
                 role="menuitem"
+                href={LINKS.uberEats}
+                target="_blank"
+                rel="noreferrer"
                 className="floating-nav-order-item"
                 data-cursor-hover
-                onClick={openDeliveryPlatforms}
+                onClick={() => setOrderOpen(false)}
               >
-                <span className="floating-nav-order-icon" aria-hidden>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="18.5" cy="17.5" r="3.5" />
-                    <circle cx="5.5" cy="17.5" r="3.5" />
-                    <circle cx="15" cy="5" r="1" />
-                    <path d="M12 17.5V14l-3-3 4-3 2 3h2" />
-                  </svg>
+                <span className="floating-nav-order-icon floating-nav-order-icon--uber" aria-hidden>
+                  <UberEatsLogo />
                 </span>
                 <span className="floating-nav-order-text">
-                  <span className="floating-nav-order-title">En livraison</span>
-                  <span className="floating-nav-order-sub">Uber Eats · Deliveroo</span>
+                  <span className="floating-nav-order-title">Uber Eats</span>
+                  <span className="floating-nav-order-sub">Commander en livraison</span>
                 </span>
-              </button>
+              </a>
+
+              <a
+                role="menuitem"
+                href={LINKS.deliveroo}
+                target="_blank"
+                rel="noreferrer"
+                className="floating-nav-order-item"
+                data-cursor-hover
+                onClick={() => setOrderOpen(false)}
+              >
+                <span className="floating-nav-order-icon floating-nav-order-icon--deliveroo" aria-hidden>
+                  <DeliverooLogo />
+                </span>
+                <span className="floating-nav-order-text">
+                  <span className="floating-nav-order-title">Deliveroo</span>
+                  <span className="floating-nav-order-sub">Commander en livraison</span>
+                </span>
+              </a>
             </div>
           )}
         </li>

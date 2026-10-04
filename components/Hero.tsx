@@ -116,10 +116,7 @@ export function Hero() {
             <span className="btn-arrow">→</span>
           </a>
           <Link href="/carte" className="btn" data-cursor-hover>
-            Commander en ligne <span className="btn-arrow">→</span>
-          </Link>
-          <Link href="/carte" className="btn" data-cursor-hover>
-            Voir la carte <span className="btn-arrow">→</span>
+            Commander sur le site <span className="btn-arrow">→</span>
           </Link>
         </div>
       </div>

@@ -280,17 +280,6 @@
     transition: background 0.25s var(--ease-quiet);
   }
   .floating-nav-order-item:hover { background: rgba(255, 255, 255, 0.07); }
-  /* L'option « En livraison » est un <button> : sans ce reset, le navigateur
-     lui applique fond gris, bordure, police système et texte centré — rompant
-     l'alignement avec les deux autres options (des <a>). */
-  button.floating-nav-order-item {
-    width: 100%;
-    background: none;
-    border: none;
-    font: inherit;
-    text-align: left;
-    color: #fff;
-  }
   .floating-nav-order-icon {
     width: 34px;
     height: 34px;
@@ -303,6 +292,12 @@
     color: #000;
   }
   .floating-nav-order-icon svg { width: 15px; height: 15px; }
+  /* Liens de livraison : pastille aux couleurs de chaque marque. Le wordmark
+     Uber Eats (2 lignes) et le kangourou Deliveroo sont un peu agrandis pour
+     rester lisibles dans la pastille. */
+  .floating-nav-order-icon--deliveroo { background: #00CCBC; color: #fff; }
+  .floating-nav-order-icon--uber svg { width: 19px; height: 19px; }
+  .floating-nav-order-icon--deliveroo svg { width: 17px; height: 17px; }
   .floating-nav-order-text {
     display: flex;
     flex-direction: column;
@@ -586,11 +581,6 @@
     }
 
     .hero-rule { margin-bottom: 1.6rem; }
-
-    /* On ne garde que les 2 CTA principales sur mobile : Appeler + Voir le menu.
-       Uber Eats & Deliveroo restent accessibles plus bas (footer). */
-    .hero-ctas .order-btn--uber,
-    .hero-ctas .order-btn--deliveroo { display: none; }
 
     .hero-ctas { flex-direction: column; gap: 0.7rem; }
     .hero-ctas .order-btn,
@@ -2604,7 +2594,14 @@
   }
 
   /* ---- Page /commander ---- */
-  .checkout { padding-top: 7.5rem; padding-bottom: 5rem; min-height: 100vh; }
+  /* Fond explicite identique au reste du site (même gabarit que .menu),
+     quelle que soit la cascade ou l'état de chargement de la page. */
+  .checkout {
+    background: var(--bg);
+    padding-top: 7.5rem;
+    padding-bottom: 5rem;
+    min-height: 100vh;
+  }
   .checkout-container { max-width: 720px; }
   .checkout-lead {
     color: var(--text-soft);

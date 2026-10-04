@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { effectivePrice, hasMenuPrice, type Product } from '@/lib/menu';
 import { formatPrice } from '@/lib/format';
@@ -17,6 +18,11 @@ import { useScrollLock } from '@/lib/scrollLock';
  * Modale de configuration d'un article avant ajout au panier :
  * formule Seul/Menu, groupes d'options (pain, suppléments, parfums…),
  * quantité. Le prix affiché est TOUJOURS recalculé par le moteur d'options.
+ *
+ * Rendue via un portail dans <body> : les cartes produit (.pcard, .menu-card)
+ * gardent une transform d'animation + overflow:hidden, ce qui emprisonnait la
+ * modale « fixed » À L'INTÉRIEUR de la carte. Au dernier niveau du DOM, elle
+ * couvre réellement tout l'écran, au-dessus de tout.
  */
 
 interface Props {
@@ -113,7 +119,9 @@ export function ItemConfigurator({ product, onClose }: Props) {
     onClose();
   }
 
-  return (
+  // Portail dans <body> (voir docblock) — le composant ne monte qu'au clic,
+  // donc `document` est toujours disponible ici.
+  return createPortal(
     <div className="item-config-overlay" onClick={onClose}>
       <div
         className="item-config"
@@ -244,6 +252,7 @@ export function ItemConfigurator({ product, onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

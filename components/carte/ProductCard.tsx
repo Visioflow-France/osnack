@@ -4,7 +4,6 @@ import { useState, type CSSProperties } from 'react';
 import Image from 'next/image';
 import {
   effectivePrice,
-  hasMenuPrice,
   hasPromo,
   promoPercent,
   type Product,
@@ -39,7 +38,6 @@ export function ProductCard({
   const { addLine } = useCart();
   const [configuring, setConfiguring] = useState(false);
   const promo = hasPromo(product);
-  const hasMenu = hasMenuPrice(product);
 
   function handleAdd() {
     if (hasConfigurator(product)) {
@@ -97,11 +95,8 @@ export function ProductCard({
             <span className="price-old">{formatPrice(product.price)}</span>
           )}
           <span className="price-now">{formatPrice(effectivePrice(product))}</span>
-          {hasMenu && (
-            <span className="price-menu">
-              Menu {formatPrice(product.priceMenu as number)}
-            </span>
-          )}
+          {/* Pas de prix « Menu » ici : le choix Seul / Menu (et son prix)
+              se fait dans la bulle de configuration à l'ajout au panier. */}
         </div>
         {/* Pastille ronde « + » façon BK : ajout express ou ouverture du
             configurateur selon le plat (libellé complet pour les lecteurs

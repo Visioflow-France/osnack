@@ -11,6 +11,7 @@ import {
   type SelectedOption,
 } from '@/lib/options';
 import { MAX_QTY, useCart } from '../CartContext';
+import { useScrollLock } from '@/lib/scrollLock';
 
 /**
  * Modale de configuration d'un article avant ajout au panier :
@@ -44,17 +45,16 @@ export function ItemConfigurator({ product, onClose }: Props) {
   const [multi, setMulti] = useState<Record<string, string[]>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
 
-  // Fermeture par Échap + blocage du scroll de fond.
+  // Fermeture par Échap.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+
+  // Blocage du scroll de fond : verrou comptabilisé qui stoppe aussi Lenis
+  // et rend TOUJOURS le scroll à la fermeture (fix du blocage mobile).
+  useScrollLock();
 
   /** Options sélectionnées, dans l'ordre des groupes. */
   const selected: SelectedOption[] = useMemo(() => {
@@ -138,9 +138,11 @@ export function ItemConfigurator({ product, onClose }: Props) {
           </button>
         </div>
 
-        <div className="item-config-body">
+        {/* data-lenis-prevent : le scroll tactile interne à la modale reste
+            natif et n'essaie pas de faire défiler la page derrière. */}
+        <div className="item-config-body" data-lenis-prevent>
           {menuAvailable && (
-            <fieldset className="item-option-group">
+            <fieldset className="item-option-group is-formule">
               <legend>Formule</legend>
               <div className="item-option-choices">
                 <button

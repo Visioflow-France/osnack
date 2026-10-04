@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { LINKS } from '@/lib/links';
 import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
+import { SocialFollow } from './SocialFollow';
 
 export function Footer() {
   return (
@@ -126,6 +127,8 @@ export function Footer() {
           allowFullScreen
         />
       </div>
+
+      <SocialFollow />
 
       <div className="footer-huge">O&apos;SNACK</div>
 

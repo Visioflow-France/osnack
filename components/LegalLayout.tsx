@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SocialFollow } from './SocialFollow';
 
 /**
  * Wrapper de mise en page pour les pages légales (mentions, CGV,
@@ -21,6 +22,8 @@ export function LegalLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="legal-main">{children}</main>
+
+      <SocialFollow />
 
       <footer className="legal-foot">
         <Link href="/" data-cursor-hover>← Retour à l&apos;accueil</Link>

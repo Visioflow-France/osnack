@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { setLenisInstance } from '@/lib/scrollLock';
 
 /**
  * Sets up Lenis smooth scroll and wires it into the GSAP ticker so that
@@ -28,6 +29,9 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     });
 
     lenis.on('scroll', ScrollTrigger.update);
+    // Partagé avec lib/scrollLock : permet aux modales de stopper/relancer
+    // Lenis quand elles verrouillent le scroll de la page.
+    setLenisInstance(lenis);
 
     const onTick = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(onTick);
@@ -58,6 +62,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener('click', onAnchorClick);
       gsap.ticker.remove(onTick);
+      setLenisInstance(null);
       lenis.destroy();
     };
   }, []);

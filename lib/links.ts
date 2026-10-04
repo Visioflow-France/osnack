@@ -18,4 +18,8 @@ export const LINKS = {
   instagram: 'https://www.instagram.com/osnackofficiel/',
   // ⚠️ À confirmer : page Facebook exacte. Recherche utilisée en attendant.
   facebook: 'https://www.facebook.com/search/top?q=O%27Snack%20Torcy',
+  // ⚠️ À confirmer : compte TikTok exact. Recherche utilisée en attendant.
+  tiktok: 'https://www.tiktok.com/search?q=O%27Snack%20Torcy',
+  // ⚠️ À confirmer : compte Snapchat exact. Recherche utilisée en attendant.
+  snapchat: 'https://www.snapchat.com/explore/O_Snack_Torcy',
 } as const;

@@ -7,8 +7,8 @@ import {
   FILTER_NOTES,
   MENU_FILTERS,
   countByFilter,
-  isAvailable,
   isFilter,
+  isPubliclyListed,
   matchesFilter,
   type Filter,
   type Product,
@@ -49,8 +49,10 @@ export function Menu({ initialProducts }: { initialProducts?: Product[] }) {
   // Menu chargé une seule fois (props serveur ISR) — aucun polling Firestore.
   const { products } = useProducts(initialProducts);
 
-  // Hide dishes the admin has toggled off (soft remove). Deletion is permanent.
-  const visible = useMemo(() => products.filter(isAvailable), [products]);
+  // Plats affichés : masqués si l'admin les a désactivés, et les formules
+  // (« menus ») n'ont plus de catégorie — le choix Seul / Menu se fait dans
+  // la bulle de configuration de chaque plat.
+  const visible = useMemo(() => products.filter(isPubliclyListed), [products]);
 
   // Entrées de la rangée de noms : « Accueil » + une entrée par catégorie.
   // « Nouveautés » n'apparaît que si au moins un plat est marqué neuf.

@@ -93,7 +93,6 @@ export const MENU_FILTERS: Filter[] = [
   'all',
   'nouveautes',
   'bons-plans',
-  'menus',
   'sandwichs',
   'burgers',
   'poulet',
@@ -124,7 +123,7 @@ const POULET_RE = /poulet|chicken|nugget|tender/i;
 export const matchesFilter = (p: Product, filter: Filter): boolean => {
   if (filter === 'all') return true;
   if (filter === 'nouveautes') return p.isNew === true;
-  if (filter === 'bons-plans') return hasPromo(p) || p.category === 'menus';
+  if (filter === 'bons-plans') return hasPromo(p);
   if (filter === 'poulet') return POULET_RE.test(p.name);
   if (filter === 'crepes-salees') return p.category === 'crepes' && isSavoryCrepe(p);
   if (filter === 'crepes-sucrees') return p.category === 'crepes' && isSweetCrepe(p);
@@ -160,7 +159,7 @@ export const CATEGORY_NOTES: Partial<Record<Category, string>> = {
 /** Notes affichées au-dessus de la grille pour chaque filtre de la barre. */
 export const FILTER_NOTES: Partial<Record<Filter, string>> = {
   ...CATEGORY_NOTES,
-  all: 'Sandwichs au four, burgers du classique au gourmet, menus, crêpes, tex-mex, desserts et milkshakes maison — choisissez une catégorie pour découvrir les plats.',
+  all: 'Sandwichs au four, burgers du classique au gourmet, crêpes, tex-mex, desserts et milkshakes maison — choisissez une catégorie pour découvrir les plats. Chaque plat se commande seul ou en menu (frites + boisson).',
   nouveautes: 'Les dernières recettes arrivées chez O’Snack — fraîchement grillées.',
   'bons-plans': 'Promos du moment et formules complètes à prix doux.',
   poulet: 'Tout le poulet : burgers panés, nuggets et tenders croustillants.',
@@ -189,6 +188,16 @@ export const promoPercent = (p: Product): number =>
 /** Whether the dish should be shown to customers. */
 export const isAvailable = (p: Product): boolean => p.available !== false;
 
+/**
+ * Whether the dish is listed on the public carte. Les formules (« menus »)
+ * ne sont plus une catégorie de la carte : chaque plat propose le choix
+ * Seul / Menu dans sa bulle de configuration (ItemConfigurator). Les
+ * anciens produits de la catégorie `menus` restent en base (éditables dans
+ * l'admin) mais n'apparaissent plus sur le site public.
+ */
+export const isPubliclyListed = (p: Product): boolean =>
+  isAvailable(p) && p.category !== 'menus';
+
 /** Whether the dish is flagged as a Best Seller on the vitrine. */
 export const isBestSeller = (p: Product): boolean => p.bestseller === true;
 
@@ -209,11 +218,13 @@ export const selectBestSellers = (list: Product[], count = 3): Product[] => {
   const byOrder = (a: Product, b: Product) =>
     (a.order ?? 9999) - (b.order ?? 9999) || a.name.localeCompare(b.name, 'fr');
 
-  const flagged = list.filter((p) => isAvailable(p) && isBestSeller(p)).sort(byOrder);
+  const flagged = list
+    .filter((p) => isPubliclyListed(p) && isBestSeller(p))
+    .sort(byOrder);
   if (flagged.length >= count) return flagged.slice(0, count);
 
   const chosen = new Set(flagged.map((p) => p.id));
-  const pool = list.filter((p) => isAvailable(p) && !chosen.has(p.id));
+  const pool = list.filter((p) => isPubliclyListed(p) && !chosen.has(p.id));
 
   // Top up with the canonical fallback ids when available.
   const byId = new Map(pool.map((p) => [p.id, p] as const));

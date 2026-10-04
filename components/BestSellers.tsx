@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { isAvailable, selectBestSellers, type Product } from '@/lib/menu';
+import { isPubliclyListed, selectBestSellers, type Product } from '@/lib/menu';
 import { useProducts } from '@/lib/useProducts';
 import { Reveal } from './Reveal';
 import { MenuCard } from './MenuCard';
@@ -16,7 +16,9 @@ import { MenuCard } from './MenuCard';
 export function BestSellers({ initialProducts }: { initialProducts?: Product[] }) {
   const { products } = useProducts(initialProducts);
 
-  const visible = useMemo(() => products.filter(isAvailable), [products]);
+  // Les formules (« menus ») n'apparaissent plus : choix Seul / Menu dans la
+  // bulle de chaque plat à la place.
+  const visible = useMemo(() => products.filter(isPubliclyListed), [products]);
   const featured = useMemo<Product[]>(
     () => selectBestSellers(visible, 3),
     [visible],

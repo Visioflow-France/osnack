@@ -12,11 +12,11 @@ import { CATEGORY_LABELS, MENU, effectivePrice, isAvailable, type Category, type
  * lecture Firestore supplémentaire.
  */
 
-/** Ordre logique des sections de la carte dans le JSON-LD. */
+/** Ordre logique des sections de la carte dans le JSON-LD (les formules
+ *  « menus » n'ont plus de section : le choix Seul / Menu se fait par plat). */
 const MENU_SECTION_ORDER: Category[] = [
   'sandwichs',
   'burgers',
-  'menus',
   'crepes',
   'texmex',
   'desserts',

@@ -110,7 +110,7 @@ export function FloatingNav() {
 
               <Link
                 role="menuitem"
-                href="/commander"
+                href="/carte"
                 className="floating-nav-order-item"
                 data-cursor-hover
                 onClick={() => setOrderOpen(false)}

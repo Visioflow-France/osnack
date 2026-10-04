@@ -156,6 +156,7 @@
   }
   .floating-nav-links {
     display: flex;
+    align-items: center;
     gap: 1.75rem;
     list-style: none;
   }
@@ -242,6 +243,17 @@
     transition: background 0.25s var(--ease-quiet);
   }
   .floating-nav-order-item:hover { background: rgba(255, 255, 255, 0.07); }
+  /* L'option « En livraison » est un <button> : sans ce reset, le navigateur
+     lui applique fond gris, bordure, police système et texte centré — rompant
+     l'alignement avec les deux autres options (des <a>). */
+  button.floating-nav-order-item {
+    width: 100%;
+    background: none;
+    border: none;
+    font: inherit;
+    text-align: left;
+    color: #fff;
+  }
   .floating-nav-order-icon {
     width: 34px;
     height: 34px;

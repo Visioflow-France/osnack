@@ -135,6 +135,12 @@
     from { opacity: 0; transform: translateX(-50%) translateY(-130%); }
     to   { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
+  /* Alignement des mots de la pastille : la marque et chaque lien occupent
+     une boîte de la même hauteur que le bouton « Commander » (40 px desktop,
+     28 px mobile) avec un centrage flex + line-height: 1. Ainsi, quel que soit
+     le strut du <li> ou les métriques (ascent/descent) de chaque police
+     (Montserrat, Inter, IBM Plex Mono), le centre visuel de chaque mot tombe
+     exactement sur l'axe médian de la pastille. */
   .floating-nav-brand {
     font-family: var(--font-montserrat), sans-serif;
     font-weight: 900;
@@ -143,9 +149,11 @@
     color: #fff;
     text-decoration: none;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.35rem;
     white-space: nowrap;
+    height: 40px;
+    line-height: 1;
   }
   .floating-nav-brand .dot {
     width: 5px;
@@ -153,12 +161,24 @@
     background: #fff;
     border-radius: 50%;
     display: inline-block;
+    flex-shrink: 0;
+    /* Point recentré verticalement, puis redescendu au niveau de la baseline
+       visuelle du logotype (effet « point final »). */
+    transform: translateY(0.16em);
   }
   .floating-nav-links {
     display: flex;
     align-items: center;
     gap: 1.75rem;
     list-style: none;
+  }
+  /* Le <li> devient lui-même flex centré : le line-height hérité du body
+     (24.8 px, calculé sur une police de 16 px) crée un « strut » qui plaçait
+     les liens ~1.6 px sous l'axe médian sur mobile. Le centrage flex neutralise
+     ce strut. */
+  .floating-nav-links > li {
+    display: flex;
+    align-items: center;
   }
   /* Ciblage « > li > a » : seuls les liens directs de la pastille sont stylés.
      Sans cela, la règle fuit aussi sur les <a> du menu « Commander » (niché
@@ -171,7 +191,10 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     position: relative;
-    padding: 0.25rem 0;
+    display: inline-flex;
+    align-items: center;
+    height: 40px;
+    line-height: 1;
     transition: color 0.3s var(--ease-quiet);
   }
   .floating-nav-links > li > a:hover { color: #fff; }
@@ -179,7 +202,9 @@
     content: '';
     position: absolute;
     left: 0;
-    bottom: 0;
+    /* Soulignement collé au bas des lettres (le texte est centré dans une
+       boîte de 40 px, bottom: 0 le placerait bien trop bas). */
+    bottom: calc(50% - 0.5em);
     width: 0;
     height: 1px;
     background: #fff;
@@ -334,9 +359,9 @@
       top: 0.6rem;
       max-width: calc(100vw - 1rem);
     }
-    .floating-nav-brand { font-size: 0.8rem; gap: 0.25rem; }
+    .floating-nav-brand { font-size: 0.8rem; gap: 0.25rem; height: 28px; }
     .floating-nav-links { gap: 0.95rem; }
-    .floating-nav-links > li > a { font-size: 0.68rem; letter-spacing: 0.1em; padding: 0.2rem 0; }
+    .floating-nav-links > li > a { font-size: 0.68rem; letter-spacing: 0.1em; height: 28px; }
 
     /* Bouton « Commander » réduit pour équilibrer la pastille. */
     .floating-nav-phone {

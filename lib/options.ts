@@ -33,6 +33,12 @@ const SODAS = ['Coca-Cola', 'Coca-Cola Zéro', 'Fanta', 'Sprite', 'Ice Tea'];
 const HAAGEN_FLAVORS = ['Vanille', 'Chocolat', 'Fraise', 'Cookies', 'Mangue', 'Pistache'];
 /** Sauces maison des articles tex-mex. */
 const TEXMEX_SAUCES = ['Algérienne', 'Samouraï', 'Andalouse', 'Blanche', 'Ketchup', 'Mayo'];
+/** Groupes sauces : nombre d'unités offertes (2× la même ou 2 différentes),
+ *  prix de chaque unité au-delà, plafond d'unités toutes sauces confondues
+ *  (≤ 8 aussi imposé par les rules Firestore sur items.options). */
+const SAUCE_FREE_UNITS = 2;
+const SAUCE_EXTRA_PRICE = 0.3;
+const SAUCE_MAX_TOTAL = 6;
 /** Alternative du Menu Enfant. */
 const MENU_ENFANT_CHOICES = ['Cheese Burger', '4 Nuggets'];
 
@@ -50,15 +56,22 @@ export interface OptionGroup {
   id: string;
   /** Question affichée (ex. « Pain au choix »). */
   label: string;
-  /** single = radio (1 choix), multi = cases à cocher (0..maxSelect). */
-  type: 'single' | 'multi';
-  /** single : un choix est obligatoire (le 1er est présélectionné). */
+  /** single = radio (1 choix), multi = cases à cocher (0..maxSelect),
+   *  sauces = quantités par sauce (steppers, 2 offertes puis supplément). */
+  type: 'single' | 'multi' | 'sauces';
+  /** single/sauces : au moins une réponse est obligatoire. */
   required: boolean;
   choices: OptionChoice[];
   /** Ajoute « Autre (préciser) » avec champ texte libre. */
   allowOther?: boolean;
   /** multi : nombre max de choix simultanés. */
   maxSelect?: number;
+  /** sauces : unités offertes (identiques ou différentes). */
+  freeUnits?: number;
+  /** sauces : prix de chaque unité au-delà des unités offertes. */
+  extraUnitPrice?: number;
+  /** sauces : nombre max d'unités toutes sauces confondues. */
+  maxTotal?: number;
 }
 
 /** Une option sélectionnée, telle que stockée dans une ligne du panier. */
@@ -150,11 +163,14 @@ export function optionGroupsFor(p: Product): OptionGroup[] {
   if (TEXMEX_SAUCE_IDS.includes(p.id)) {
     groups.push({
       id: 'texmex-sauce',
-      label: 'Sauce maison au choix',
-      type: 'single',
+      label: 'Sauces maison',
+      type: 'sauces',
       required: true,
       choices: plainChoices('texmex-sauce', TEXMEX_SAUCES),
       allowOther: true,
+      freeUnits: SAUCE_FREE_UNITS,
+      extraUnitPrice: SAUCE_EXTRA_PRICE,
+      maxTotal: SAUCE_MAX_TOTAL,
     });
   }
   if (p.id === 'menu-enfant') {
@@ -188,6 +204,16 @@ export function defaultSelections(p: Product): SelectedOption[] {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
+ * Prix de la n-ième unité d'un groupe sauces (0 = offerte) : les
+ * `freeUnits` premières unités — identiques ou différentes — sont incluses,
+ * chaque unité suivante coûte `extraUnitPrice`. Le total d'un groupe étant
+ * la somme de ces unités, il ne dépend pas de l'ordre de sélection.
+ */
+export function sauceUnitPrice(g: OptionGroup, unitIndex: number): number {
+  return unitIndex < (g.freeUnits ?? 0) ? 0 : (g.extraUnitPrice ?? 0);
+}
+
+/**
  * Prix unitaire d'une ligne : base (promo > prix normal) ou formule menu,
  * + le prix de chaque option sélectionnée (suppléments, +1 € saveur…).
  */
@@ -201,26 +227,70 @@ export function computeUnitPrice(
   return round2(base + sel.reduce((sum, o) => sum + (o.price ?? 0), 0));
 }
 
-/** Résumé compact des options pour l'affichage et le ticket (« Menu · Tortillas · + Bacon »). */
+/** Résumé compact des options pour l'affichage et le ticket
+ *  (« Menu · Tortillas · Algérienne ×2 · + Samouraï »). Les libellés
+ *  identiques (une sauce prise plusieurs fois) sont agrégés en « ×n ». */
 export function summarizeOptions(variant: 'seul' | 'menu', sel: SelectedOption[]): string {
   const parts: string[] = [];
   if (variant === 'menu') parts.push('Menu');
+  const agg = new Map<string, { n: number; price: number }>();
   for (const o of sel) {
-    if (o.price > 0) parts.push(`+ ${o.label}`);
-    else parts.push(o.label);
+    const hit = agg.get(o.label);
+    if (hit) {
+      hit.n += 1;
+      hit.price += o.price ?? 0;
+    } else {
+      agg.set(o.label, { n: 1, price: o.price ?? 0 });
+    }
+  }
+  for (const [label, { n, price }] of agg) {
+    const l = n > 1 ? `${label} ×${n}` : label;
+    parts.push(price > 0 ? `+ ${l}` : l);
   }
   const out = parts.join(' · ');
   return out.length > 160 ? `${out.slice(0, 157)}…` : out;
 }
 
 /**
- * Retrouve le prix d'une option à partir de son libellé dans les groupes du
- * produit (contrôle admin anti-fraude). Null = libellé inconnu.
+ * Recalcule la somme des options d'une ligne depuis la carte (contrôle
+ * anti-fraude admin) : chaque libellé est re-matché dans la config du
+ * produit. Pour un groupe sauces, chaque entrée = 1 unité prixée selon sa
+ * position cumulée (2 offertes puis extraUnitPrice) — la somme reste juste
+ * quel que soit l'ordre du tableau. Les libellés « Autre : … » d'un groupe
+ * sauces à allowOther comptent comme des unités (texte libre invérifiable).
+ * Retourne la somme attendue et les libellés inconnus.
  */
-export function priceForOptionLabel(p: Product, label: string): number | null {
-  for (const g of optionGroupsFor(p)) {
-    const hit = g.choices.find((c) => c.label === label);
-    if (hit) return hit.price;
+export function recalcOptionPrices(
+  p: Product,
+  sel: { label: string; price?: number }[],
+): { sum: number; unknown: string[] } {
+  let sum = 0;
+  const unknown: string[] = [];
+  const groups = optionGroupsFor(p);
+  const sauceUnits = new Map<string, number>(); // groupId → unités déjà comptées
+  for (const o of sel) {
+    const group = groups.find((g) => g.choices.some((c) => c.label === o.label));
+    if (!group) {
+      const sauceOther = o.label.startsWith('Autre')
+        ? groups.find((g) => g.type === 'sauces' && g.allowOther)
+        : undefined;
+      if (sauceOther) {
+        const seen = sauceUnits.get(sauceOther.id) ?? 0;
+        sum += sauceUnitPrice(sauceOther, seen);
+        sauceUnits.set(sauceOther.id, seen + 1);
+        continue;
+      }
+      unknown.push(o.label);
+      sum += o.price ?? 0; // on compte le prix envoyé, mais on signale
+      continue;
+    }
+    if (group.type === 'sauces') {
+      const seen = sauceUnits.get(group.id) ?? 0;
+      sum += sauceUnitPrice(group, seen);
+      sauceUnits.set(group.id, seen + 1);
+    } else {
+      sum += group.choices.find((c) => c.label === o.label)?.price ?? 0;
+    }
   }
-  return null;
+  return { sum: round2(sum), unknown };
 }

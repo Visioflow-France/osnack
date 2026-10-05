@@ -76,10 +76,32 @@ export function FloatingNav() {
             aria-label="Commander — choisir le mode de commande"
             onClick={() => setOrderOpen((v) => !v)}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+            {/* Desktop : téléphone. Mobile sans panier : la main qui clique,
+                l'écriture « Commander » actuelle est conservée. */}
+            <svg className="floating-nav-ic-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
             </svg>
-            <span>Commander</span>
+            <svg className="floating-nav-ic-hand" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M12 1v3M7.5 3.5l1.8 2.4M16.5 3.5l-1.8 2.4" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
+              <path d="M9 11.5V6.5a1.5 1.5 0 0 1 3 0v5.8a.5.5 0 0 0 .8.4 2.5 2.5 0 0 1 3.7 2.1v2.7a5.5 5.5 0 0 1-5.5 5.5h-1a5.5 5.5 0 0 1-4.2-1.9l-2.6-3.1a1.5 1.5 0 0 1 2.2-2l1.6 1.6a.5.5 0 0 0 .8-.4v-5.7a1.5 1.5 0 0 1 3 0z" />
+            </svg>
+            <span className="floating-nav-phone-label">Commander</span>
+            {/* Mobile avec panier : badge rond « COMMANDER » (texte courbé +
+                main) qui remplace la pilule téléphone. */}
+            <span className="floating-nav-badge" aria-hidden>
+              <svg viewBox="0 0 100 100" className="floating-nav-badge-arc">
+                <path id="floating-nav-badge-curve" d="M 18,50 A 32,32 0 1,1 82,50" fill="none" />
+                <text fill="#000000" fontFamily="'Arial Black', Arial, sans-serif" fontWeight={900} fontSize="10.5" letterSpacing="1">
+                  <textPath href="#floating-nav-badge-curve" startOffset="50%" textAnchor="middle">
+                    COMMANDER
+                  </textPath>
+                </text>
+              </svg>
+              <svg viewBox="0 0 24 24" className="floating-nav-badge-hand" fill="#000000">
+                <path d="M12 1v3M7.5 3.5l1.8 2.4M16.5 3.5l-1.8 2.4" stroke="#000000" strokeWidth={2} strokeLinecap="round" />
+                <path d="M9 11.5V6.5a1.5 1.5 0 0 1 3 0v5.8a.5.5 0 0 0 .8.4 2.5 2.5 0 0 1 3.7 2.1v2.7a5.5 5.5 0 0 1-5.5 5.5h-1a5.5 5.5 0 0 1-4.2-1.9l-2.6-3.1a1.5 1.5 0 0 1 2.2-2l1.6 1.6a.5.5 0 0 0 .8-.4v-5.7a1.5 1.5 0 0 1 3 0z" />
+              </svg>
+            </span>
           </button>
 
           {orderOpen && (

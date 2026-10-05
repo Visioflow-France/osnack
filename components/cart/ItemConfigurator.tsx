@@ -8,6 +8,7 @@ import { formatPrice } from '@/lib/format';
 import {
   computeUnitPrice,
   optionGroupsFor,
+  sauceUnitPrice,
   type OptionGroup,
   type SelectedOption,
 } from '@/lib/options';
@@ -49,6 +50,15 @@ export function ItemConfigurator({ product, onClose }: Props) {
     ),
   );
   const [multi, setMulti] = useState<Record<string, string[]>>({});
+  // sauces : groupId → (choiceId | sentinel Autre) → nombre d'unités.
+  // Comme les groupes single requis, la 1re sauce est présélectionnée.
+  const [counts, setCounts] = useState<Record<string, Record<string, number>>>(() =>
+    Object.fromEntries(
+      groups
+        .filter((g) => g.type === 'sauces' && g.required)
+        .map((g) => [g.id, { [g.choices[0].id]: 1 }]),
+    ),
+  );
   const [otherText, setOtherText] = useState<Record<string, string>>({});
 
   // Fermeture par Échap.
@@ -78,6 +88,31 @@ export function ItemConfigurator({ product, onClose }: Props) {
           if (choice)
             out.push({ groupId: g.id, groupLabel: g.label, label: choice.label, price: choice.price });
         }
+      } else if (g.type === 'sauces') {
+        // Une entrée par unité (une sauce prise 2× → 2 entrées) : la position
+        // cumulée fixe le prix — 1res unités offertes, suivantes en supplément.
+        const m = counts[g.id] ?? {};
+        const rows: { id: string; label: string }[] = [
+          ...g.choices.map((c) => ({ id: c.id, label: c.label })),
+          ...(g.allowOther ? [{ id: OTHER, label: '' }] : []),
+        ];
+        let used = 0;
+        for (const row of rows) {
+          const n = m[row.id] ?? 0;
+          if (!n) continue;
+          const text = row.id === OTHER ? (otherText[g.id] ?? '').trim() : '';
+          if (row.id === OTHER && !text) continue;
+          const label = row.id === OTHER ? `Autre : ${text.slice(0, 60)}` : row.label;
+          for (let i = 0; i < n; i++) {
+            out.push({
+              groupId: g.id,
+              groupLabel: g.label,
+              label,
+              price: sauceUnitPrice(g, used),
+            });
+            used++;
+          }
+        }
       } else {
         for (const id of multi[g.id] ?? []) {
           const choice = g.choices.find((c) => c.id === id);
@@ -87,14 +122,53 @@ export function ItemConfigurator({ product, onClose }: Props) {
       }
     }
     return out;
-  }, [groups, single, multi, otherText]);
+  }, [groups, single, multi, counts, otherText]);
 
   const unit = computeUnitPrice(product, variant, selected);
 
+  /** Total d'unités d'un groupe sauces (Autre compris). */
+  function sauceTotal(g: OptionGroup): number {
+    return Object.values(counts[g.id] ?? {}).reduce((a, b) => a + b, 0);
+  }
+
+  /** Indicateur d'état du groupe : sauces offertes restantes ou supplément. */
+  function sauceHint(g: OptionGroup): string {
+    const total = sauceTotal(g);
+    const free = g.freeUnits ?? 0;
+    const extra = g.extraUnitPrice ?? 0;
+    const remaining = free - total;
+    if (remaining > 0)
+      return `Encore ${remaining} sauce${remaining > 1 ? 's' : ''} offerte${remaining > 1 ? 's' : ''} — ensuite +${formatPrice(extra)} la sauce`;
+    if (total === free) return `Toutes vos sauces sont offertes — la suivante : +${formatPrice(extra)}`;
+    return `Sauces supplémentaires : +${formatPrice((total - free) * extra)}`;
+  }
+
+  /** +1/−1 sur une sauce ; le plafond du groupe (maxTotal) bloque l'ajout. */
+  function bumpSauce(g: OptionGroup, id: string, delta: 1 | -1) {
+    setCounts((prev) => {
+      const m = { ...(prev[g.id] ?? {}) };
+      const next = (m[id] ?? 0) + delta;
+      if (next <= 0) {
+        delete m[id];
+      } else {
+        const total = Object.values(m).reduce((a, b) => a + b, 0) + delta;
+        if (g.maxTotal != null && total > g.maxTotal) return prev; // plafond atteint
+        m[id] = next;
+      }
+      return { ...prev, [g.id]: m };
+    });
+  }
+
   /** Un « Autre » sélectionné mais non précisé bloque l'ajout. */
-  const missingOther = groups.some(
-    (g) => g.type === 'single' && single[g.id] === OTHER && !(otherText[g.id] ?? '').trim(),
+  const missingOther = groups.some((g) =>
+    g.type === 'single'
+      ? single[g.id] === OTHER && !(otherText[g.id] ?? '').trim()
+      : g.type === 'sauces'
+        ? ((counts[g.id] ?? {})[OTHER] ?? 0) > 0 && !(otherText[g.id] ?? '').trim()
+        : false,
   );
+  /** Un groupe sauces obligatoire sans aucune unité bloque l'ajout. */
+  const missingSauce = groups.some((g) => g.type === 'sauces' && g.required && sauceTotal(g) === 0);
 
   function toggleMulti(g: OptionGroup, id: string) {
     setMulti((prev) => {
@@ -107,7 +181,7 @@ export function ItemConfigurator({ product, onClose }: Props) {
   }
 
   function handleAdd() {
-    if (missingOther) return;
+    if (missingOther || missingSauce) return;
     addLine({
       productId: product.id,
       productName: product.name,
@@ -177,53 +251,101 @@ export function ItemConfigurator({ product, onClose }: Props) {
             <fieldset className="item-option-group" key={g.id}>
               <legend>
                 {g.label}
-                {!g.required && <span className="item-option-optional"> · facultatif</span>}
+                {g.type === 'sauces' ? (
+                  <span className="item-option-optional">
+                    {' '}
+                    · {g.freeUnits ?? 0} offertes
+                    {g.extraUnitPrice ? `, +${formatPrice(g.extraUnitPrice)} la supplémentaire` : ''}
+                  </span>
+                ) : (
+                  !g.required && <span className="item-option-optional"> · facultatif</span>
+                )}
               </legend>
-              <div className="item-option-choices">
-                {g.type === 'single'
-                  ? g.choices.map((c) => (
-                      <button
-                        type="button"
+
+              {g.type === 'sauces' ? (
+                <>
+                  <p className="item-sauce-hint">{sauceHint(g)}</p>
+                  <div className="item-sauce-list">
+                    {g.choices.map((c) => (
+                      <SauceRow
                         key={c.id}
-                        className={`item-option-choice ${single[g.id] === c.id ? 'is-selected' : ''}`}
-                        onClick={() => setSingle((p) => ({ ...p, [g.id]: c.id }))}
-                      >
-                        <span>{c.label}</span>
-                        {c.price > 0 && (
-                          <span className="item-option-price">+{formatPrice(c.price)}</span>
-                        )}
-                      </button>
-                    ))
-                  : g.choices.map((c) => {
-                      const on = (multi[g.id] ?? []).includes(c.id);
-                      const full =
-                        g.maxSelect != null && (multi[g.id] ?? []).length >= g.maxSelect && !on;
-                      return (
+                        label={c.label}
+                        count={(counts[g.id] ?? {})[c.id] ?? 0}
+                        capped={g.maxTotal != null && sauceTotal(g) >= g.maxTotal}
+                        onDown={() => bumpSauce(g, c.id, -1)}
+                        onUp={() => bumpSauce(g, c.id, 1)}
+                      />
+                    ))}
+                    {g.allowOther && (
+                      <SauceRow
+                        label="Autre sauce (préciser)"
+                        count={(counts[g.id] ?? {})[OTHER] ?? 0}
+                        capped={g.maxTotal != null && sauceTotal(g) >= g.maxTotal}
+                        onDown={() => bumpSauce(g, OTHER, -1)}
+                        onUp={() => bumpSauce(g, OTHER, 1)}
+                      />
+                    )}
+                  </div>
+                  {g.allowOther && (counts[g.id] ?? {})[OTHER] > 0 && (
+                    <input
+                      className="item-option-other"
+                      value={otherText[g.id] ?? ''}
+                      onChange={(e) =>
+                        setOtherText((p) => ({ ...p, [g.id]: e.target.value.slice(0, 60) }))
+                      }
+                      placeholder="Précisez la sauce (ex. barbecue)"
+                      maxLength={60}
+                    />
+                  )}
+                </>
+              ) : (
+                <div className="item-option-choices">
+                  {g.type === 'single'
+                    ? g.choices.map((c) => (
                         <button
                           type="button"
                           key={c.id}
-                          className={`item-option-choice ${on ? 'is-selected' : ''} ${full ? 'is-full' : ''}`}
-                          onClick={() => toggleMulti(g, c.id)}
-                          aria-pressed={on}
+                          className={`item-option-choice ${single[g.id] === c.id ? 'is-selected' : ''}`}
+                          onClick={() => setSingle((p) => ({ ...p, [g.id]: c.id }))}
                         >
                           <span>{c.label}</span>
                           {c.price > 0 && (
                             <span className="item-option-price">+{formatPrice(c.price)}</span>
                           )}
                         </button>
-                      );
-                    })}
-                {g.allowOther && g.type === 'single' && (
-                  <button
-                    type="button"
-                    className={`item-option-choice ${single[g.id] === OTHER ? 'is-selected' : ''}`}
-                    onClick={() => setSingle((p) => ({ ...p, [g.id]: OTHER }))}
-                  >
-                    <span>Autre…</span>
-                  </button>
-                )}
-              </div>
-              {g.allowOther && single[g.id] === OTHER && (
+                      ))
+                    : g.choices.map((c) => {
+                        const on = (multi[g.id] ?? []).includes(c.id);
+                        const full =
+                          g.maxSelect != null && (multi[g.id] ?? []).length >= g.maxSelect && !on;
+                        return (
+                          <button
+                            type="button"
+                            key={c.id}
+                            className={`item-option-choice ${on ? 'is-selected' : ''} ${full ? 'is-full' : ''}`}
+                            onClick={() => toggleMulti(g, c.id)}
+                            aria-pressed={on}
+                          >
+                            <span>{c.label}</span>
+                            {c.price > 0 && (
+                              <span className="item-option-price">+{formatPrice(c.price)}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                  {g.allowOther && g.type === 'single' && (
+                    <button
+                      type="button"
+                      className={`item-option-choice ${single[g.id] === OTHER ? 'is-selected' : ''}`}
+                      onClick={() => setSingle((p) => ({ ...p, [g.id]: OTHER }))}
+                    >
+                      <span>Autre…</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {g.allowOther && g.type === 'single' && single[g.id] === OTHER && (
                 <input
                   className="item-option-other"
                   value={otherText[g.id] ?? ''}
@@ -246,13 +368,58 @@ export function ItemConfigurator({ product, onClose }: Props) {
             type="button"
             className="item-config-add"
             onClick={handleAdd}
-            disabled={missingOther}
+            disabled={missingOther || missingSauce}
           >
-            {missingOther ? 'Précisez votre choix' : `Ajouter — ${formatPrice(unit * qty)}`}
+            {missingOther
+              ? 'Précisez votre choix'
+              : missingSauce
+                ? 'Choisissez au moins une sauce'
+                : `Ajouter — ${formatPrice(unit * qty)}`}
           </button>
         </div>
       </div>
     </div>,
     document.body,
+  );
+}
+
+/** Une ligne de sauce : libellé + compteur d'unités (− / n / +). */
+function SauceRow({
+  label,
+  count,
+  capped,
+  onDown,
+  onUp,
+}: {
+  label: string;
+  count: number;
+  /** Plafond d'unités du groupe atteint : le + est désactivé. */
+  capped: boolean;
+  onDown: () => void;
+  onUp: () => void;
+}) {
+  return (
+    <div className={`item-sauce-row ${count > 0 ? 'is-selected' : ''}`}>
+      <span className="item-sauce-name">{label}</span>
+      <div className="item-sauce-stepper" role="group" aria-label={`Quantité — ${label}`}>
+        <button
+          type="button"
+          onClick={onDown}
+          disabled={count === 0}
+          aria-label={`Retirer une sauce ${label}`}
+        >
+          −
+        </button>
+        <span>{count}</span>
+        <button
+          type="button"
+          onClick={onUp}
+          disabled={capped}
+          aria-label={`Ajouter une sauce ${label}`}
+        >
+          +
+        </button>
+      </div>
+    </div>
   );
 }

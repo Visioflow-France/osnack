@@ -1,5 +1,5 @@
 import { effectivePrice, hasMenuPrice, type Product } from './menu';
-import { priceForOptionLabel } from './options';
+import { recalcOptionPrices } from './options';
 import type { Order } from './products';
 
 /**
@@ -38,16 +38,11 @@ export function checkOrderTotal(order: Order, products: Product[]): OrderCheck {
         ? (product.priceMenu as number)
         : effectivePrice(product);
 
-    // Options : le prix de chaque libellé est re-matché dans la config.
-    let optionsSum = 0;
-    for (const o of item.options ?? []) {
-      const price = priceForOptionLabel(product, o.label);
-      if (price == null) {
-        issues.push(`option inconnue : ${o.label} (${item.name})`);
-        optionsSum += o.price ?? 0; // on compte le prix envoyé, mais on signale
-      } else {
-        optionsSum += price;
-      }
+    // Options : le prix de chaque libellé est re-matché dans la config
+    // (groupes sauces : prix cumulé, 2 unités offertes puis supplément).
+    const { sum: optionsSum, unknown } = recalcOptionPrices(product, item.options ?? []);
+    for (const label of unknown) {
+      issues.push(`option inconnue : ${label} (${item.name})`);
     }
 
     const unit = Math.round((base + optionsSum) * 100) / 100;

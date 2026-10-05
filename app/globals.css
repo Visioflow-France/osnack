@@ -259,6 +259,34 @@
   .floating-nav-phone:hover { transform: scale(1.04); }
   .floating-nav-phone svg { width: 16px; height: 16px; }
 
+  /* Main qui clique : icône « Commander » mobile (le téléphone reste sur
+     desktop). Badge rond « COMMANDER » : n'apparaît que sur mobile, une fois
+     le panier ouvert — la pilule téléphone laisse alors place au badge. */
+  .floating-nav-ic-hand { display: none; }
+  .floating-nav-badge {
+    display: none;
+    position: relative;
+    width: 46px;
+    height: 46px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    align-items: center;
+    justify-content: center;
+  }
+  .floating-nav-badge .floating-nav-badge-arc {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .floating-nav-badge .floating-nav-badge-hand {
+    width: 16px;
+    height: 16px;
+    margin-top: 7px; /* la main descend sous le texte courbé */
+  }
+
   /* Menu « Commander » : choix du canal (téléphone, site, livraison).
      Le <li> .floating-nav-order sert de point d'ancrage au menu déroulant,
      centré sous le bouton (placé au milieu de la pastille, après « Carte »). */
@@ -394,14 +422,29 @@
     }
     .floating-nav-phone svg { width: 12px; height: 12px; }
 
-    /* Panier : pastille compacte ; quand elle est visible (classe
-       .floating-nav--with-cart sur la nav), le label du bouton « Commander »
-       se retire pour préserver la largeur sur 320 px. */
+    /* Panier : pastille compacte. Sans panier, la main remplace l'icône
+       téléphone et l'écriture « Commander » actuelle est conservée. */
     .floating-nav-cart { width: 28px; height: 28px; }
     .floating-nav-cart svg { width: 13px; height: 13px; }
     .floating-nav-cart-badge { min-width: 14px; height: 14px; font-size: 0.52rem; }
-    .floating-nav--with-cart .floating-nav-phone span { display: none; }
-    .floating-nav--with-cart .floating-nav-phone { padding: 0 0.5rem; }
+    .floating-nav-ic-phone { display: none; }
+    .floating-nav-phone .floating-nav-ic-hand {
+      display: block;
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Avec panier (classe .floating-nav--with-cart sur la nav) : le bouton
+       « Commander » devient le badge rond — pilule, écriture et icônes
+       simples disparaissent au profit du texte courbé + main. */
+    .floating-nav--with-cart .floating-nav-phone {
+      background: transparent;
+      height: auto;
+      padding: 0;
+    }
+    .floating-nav--with-cart .floating-nav-phone-label { display: none; }
+    .floating-nav--with-cart .floating-nav-phone .floating-nav-ic-hand { display: none; }
+    .floating-nav--with-cart .floating-nav-phone .floating-nav-badge { display: flex; }
 
     /* Menu « Commander » : légèrement resserré pour rester dans l'écran. */
     .floating-nav-order-menu {
@@ -1820,6 +1863,76 @@
     outline: none;
   }
   .item-option-other:focus { border-color: #fff; }
+
+  /* Sauces : une ligne par sauce avec compteur d'unités (−/n/+). Les 2
+     premières unités — identiques ou différentes — sont offertes, chaque
+     suivante est facturée en supplément (prix fixé par le moteur d'options). */
+  .item-sauce-hint {
+    margin: -0.15rem 0 0;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.72rem;
+    color: var(--text-mute);
+  }
+  .item-sauce-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .item-sauce-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.45rem 0.5rem 0.45rem 0.95rem;
+    color: var(--text-soft);
+    transition: all 0.2s var(--ease-quiet);
+  }
+  .item-sauce-row.is-selected {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+  .item-sauce-name {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.82rem;
+  }
+  .item-sauce-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+  }
+  .item-sauce-stepper button {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: inherit;
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease-quiet), opacity 0.2s var(--ease-quiet);
+  }
+  .item-sauce-row.is-selected .item-sauce-stepper button {
+    border-color: rgba(0, 0, 0, 0.22);
+  }
+  .item-sauce-stepper button:hover:not(:disabled) { border-color: currentColor; }
+  .item-sauce-stepper button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .item-sauce-stepper > span {
+    min-width: 2ch;
+    text-align: center;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.85rem;
+  }
 
   .item-config-footer {
     display: flex;

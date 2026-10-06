@@ -29,6 +29,28 @@ const nextConfig = {
       { source: '/hero-desktop.webp', headers: cacheImmutable },
       { source: '/hero-burger.png', headers: cacheImmutable },
       { source: '/og-image.jpg', headers: cacheImmutable },
+      // Service worker du dashboard admin : servi depuis /sw.admin.js mais
+      // scoped à /admin/ — l'en-tête Service-Worker-Allowed l'autorise.
+      {
+        source: '/sw.admin.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/admin/' },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      // Manifest PWA admin : toujours frais après un déploiement.
+      {
+        source: '/admin-pwa/manifest.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
     ];
   },
 };

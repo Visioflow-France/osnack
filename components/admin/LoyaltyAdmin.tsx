@@ -141,10 +141,10 @@ export function LoyaltyAdmin({ user }: { user: User }) {
           <tbody>
             {codes.map((c) => (
               <tr key={c.code}>
-                <td className="cell-code">{c.code}</td>
-                <td>{c.amountEur != null ? `${c.amountEur.toFixed(2)} €` : '—'}</td>
-                <td>{c.points} pts</td>
-                <td>
+                <td className="cell-code" data-label="Code">{c.code}</td>
+                <td data-label="Montant">{c.amountEur != null ? `${c.amountEur.toFixed(2)} €` : '—'}</td>
+                <td data-label="Points">{c.points} pts</td>
+                <td data-label="Statut">
                   <span className={`admin-pill ${c.status === 'redeemed' ? 'on' : c.status === 'cancelled' ? 'off' : 'promo'}`}>
                     {c.status === 'redeemed'
                       ? 'Utilisé'
@@ -153,7 +153,7 @@ export function LoyaltyAdmin({ user }: { user: User }) {
                         : 'Disponible'}
                   </span>
                 </td>
-                <td>{new Date(c.createdAt).toLocaleString('fr-FR')}</td>
+                <td data-label="Créé le">{new Date(c.createdAt).toLocaleString('fr-FR')}</td>
               </tr>
             ))}
             {codes.length === 0 && (

@@ -3803,9 +3803,7 @@
   }
 
   @media (max-width: 600px) {
-    .admin-shell { padding: 1.25rem; }
     .admin-row { grid-template-columns: 1fr; }
-    .admin-card { padding: 1.75rem; margin-top: 4vh; }
   }
 
   /* ============ ADMIN — onglets & fidélité ============ */
@@ -3928,6 +3926,200 @@
   .admin-table .cell-code {
     font-family: var(--font-ibm), monospace;
     letter-spacing: 0.08em;
+  }
+
+  /* Tactile : pas de flash gris au tap, pas de délai / zoom double-tap. */
+  .admin-btn,
+  .admin-pill,
+  .admin-tab,
+  .order-picker-item,
+  .order-line-qty button {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* ============ ADMIN — MOBILE ============ */
+  /* Dashboard pensé desktop à l'origine : cette section le rend utilisable
+     d'une seule main au comptoir/en cuisine. Tables converties en cartes
+     (libellés via data-label), onglets scrollables et collants, modales en
+     feuille plein écran ancrée en bas, champs à 16 px (évite le zoom auto
+     iOS au focus) et cibles tactiles ≥ 44 px. */
+  @media (max-width: 720px) {
+    /* Coque : moins de marge, plus de surface utile. */
+    .admin-shell { padding: 1rem; }
+    .admin-card { padding: 1.5rem; margin-top: 3vh; }
+
+    /* En-tête compact : le logo et le bouton restent, l'email (long)
+       disparaît — il n'y a qu'un admin. */
+    .admin-top { padding-bottom: 1rem; gap: 0.75rem; }
+    .admin-user { display: none; }
+
+    /* Bandeau nouvelle commande : empilé, non collant (laisse les onglets
+       collants juste en dessous). */
+    .admin-neworder-banner { position: static; margin: 1rem 0 0.75rem; }
+    .admin-neworder-item { align-items: flex-start; }
+    .admin-neworder-item .admin-btn.ghost { margin-left: 0; }
+
+    /* Onglets : pilules scrollables horizontalement, collées en haut pendant
+       le défilement — changer d'onglet sans remonter toute la page. */
+    .admin-tabs {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      margin: 1rem -1rem 1.25rem;
+      padding: 0.5rem 1rem 0.75rem;
+      background: var(--bg);
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .admin-tabs::-webkit-scrollbar { display: none; }
+    .admin-tab { flex: 0 0 auto; white-space: nowrap; padding: 0.6rem 1.1rem; }
+
+    /* Toolbar : titre sur une ligne, boutons d'action pleine largeur. */
+    .admin-toolbar { margin: 1.5rem 0 1.25rem; }
+    .admin-toolbar h1 { font-size: 1.5rem; }
+    .admin-toolbar-actions { display: flex; width: 100%; }
+    .admin-toolbar-actions .admin-btn { flex: 1 1 0; min-height: 46px; }
+
+    /* Stats : grille 2×2 lisible. */
+    .admin-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+      margin-bottom: 1.25rem;
+    }
+    .admin-stat { padding: 1rem 1.1rem; }
+    .admin-stat-num { font-size: 1.7rem; }
+
+    /* ---- Tables → cartes : une rangée = une carte ---- */
+    .admin-table-wrap { overflow-x: visible; }
+    .admin-table { min-width: 0; display: block; }
+    .admin-table thead { display: none; }
+    .admin-table tbody { display: block; }
+    .admin-table tr {
+      display: block;
+      padding: 0.85rem 1rem 1rem;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .admin-table tbody tr:last-child { border-bottom: none; }
+    .admin-table td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.28rem 0;
+      border-bottom: none;
+      text-align: right;
+    }
+    /* Libellé de colonne (th) → étiquette à gauche de la valeur. */
+    .admin-table td[data-label]::before {
+      content: attr(data-label);
+      flex: 0 0 auto;
+      font-family: var(--font-ibm), monospace;
+      font-size: 0.62rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-mute);
+      text-align: left;
+    }
+    /* Contenus multi-lignes (client, articles) empilés côté valeur. */
+    .cell-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.15rem;
+      text-align: right;
+      min-width: 0;
+    }
+    /* En-tête de carte « carte » : vignette + nom, séparé du reste. */
+    .admin-table td.cell-name {
+      justify-content: flex-start;
+      padding-bottom: 0.55rem;
+      margin-bottom: 0.35rem;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .admin-table td.cell-pickup { white-space: normal; }
+    /* Actions : deux gros boutons pleine largeur en pied de carte. */
+    .admin-table td.cell-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-top: 0.6rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--line-soft);
+    }
+    .admin-table td.cell-actions .admin-btn {
+      width: 100%;
+      min-height: 46px;
+      padding: 0.7rem 0.4rem;
+      font-size: 0.72rem;
+    }
+    .admin-table td.admin-empty { display: block; text-align: center; }
+    /* Fond d'alerte total ≠ vérif : sur la carte entière, pas par cellule. */
+    .admin-table tr.row-warn { background: rgba(255, 82, 82, 0.07); }
+    .admin-table tr.row-warn td { background: none; }
+
+    /* Pastilles-toggle (Top / État) plus tapables. */
+    .admin-pill { padding: 0.45rem 0.85rem; }
+    .admin-pill.warn { margin-left: 0; }
+
+    /* Toutes les commandes restantes ≥ 44 px de haut. */
+    .admin-btn { min-height: 44px; }
+    .admin-btn.sm { min-height: 40px; }
+
+    /* ---- Modales : feuille plein écran ancrée en bas (pouce) ---- */
+    .admin-overlay { padding: 0; align-items: flex-end; }
+    .admin-modal {
+      max-width: none;
+      border-radius: 22px 22px 0 0;
+      padding: 1.4rem 1.15rem calc(1.4rem + env(safe-area-inset-bottom, 0px));
+      max-height: 92vh;
+      max-height: 92dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .admin-modal-head { margin-bottom: 1rem; }
+    .admin-x { width: 40px; height: 40px; }
+    .admin-actions { display: flex; gap: 0.5rem; }
+    .admin-actions .admin-btn { flex: 1 1 0; }
+    .admin-row { gap: 0.8rem; }
+
+    /* Champs à 16 px réels : iOS/Android ne zooment plus au focus. */
+    .admin-field input,
+    .admin-field select,
+    .admin-field textarea { font-size: 1rem; }
+    .admin-check { padding: 0.35rem 0; }
+    .admin-check input { width: 22px; height: 22px; }
+    .order-line-qty button { width: 34px; height: 34px; }
+
+    /* Fidélité : formulaire empilé, code bien visible. */
+    .admin-loyalty-form { padding: 1.1rem; gap: 0.9rem; }
+    .admin-loyalty-form .admin-field { flex: 1 1 100%; }
+    .admin-loyalty-form .admin-btn { width: 100%; }
+    .admin-loyalty-result {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.9rem;
+      padding: 1.1rem;
+    }
+    .admin-loyalty-code { font-size: 1.3rem; letter-spacing: 0.14em; word-break: break-all; }
+
+    /* Onglet Accueil : une carte par ligne. */
+    .admin-slides { grid-template-columns: 1fr; }
+
+    /* Toast : au-dessus de la barre de geste, largeur contrainte. */
+    .admin-toast {
+      left: 1rem;
+      right: 1rem;
+      transform: none;
+      bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+      white-space: normal;
+      text-align: center;
+    }
   }
 
   /* ============ CARTE — TUILES & CARTES PRODUITS (organisation BK) ============ */

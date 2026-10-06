@@ -392,25 +392,27 @@ function Dashboard({ user }: { user: User }) {
                     <small>Ordre {p.order ?? '—'}</small>
                   </div>
                 </td>
-                <td>{CATEGORY_LABELS[p.category]}</td>
-                <td className="cell-price">
-                  {hasPromo(p) ? (
-                    <>
-                      <span className="price-old">{formatPrice(p.price)}</span>
-                      <span>{formatPrice(effectivePrice(p))}</span>
-                    </>
-                  ) : (
-                    formatPrice(p.price)
-                  )}
+                <td data-label="Catégorie">{CATEGORY_LABELS[p.category]}</td>
+                <td className="cell-price" data-label="Prix">
+                  <div className="cell-ref">
+                    {hasPromo(p) ? (
+                      <>
+                        <span className="price-old">{formatPrice(p.price)}</span>
+                        <span>{formatPrice(effectivePrice(p))}</span>
+                      </>
+                    ) : (
+                      formatPrice(p.price)
+                    )}
+                  </div>
                 </td>
-                <td>
+                <td data-label="Promo">
                   {hasPromo(p) ? (
                     <span className="admin-pill promo">-{promoPercent(p)} %</span>
                   ) : (
                     <span className="admin-mute">—</span>
                   )}
                 </td>
-                <td>
+                <td data-label="Top">
                   <button
                     className={`admin-pill ${isBestSeller(p) ? 'on' : 'off'}`}
                     onClick={() => handleToggleBest(p)}
@@ -419,7 +421,7 @@ function Dashboard({ user }: { user: User }) {
                     {isBestSeller(p) ? '★ Top' : 'Non'}
                   </button>
                 </td>
-                <td>
+                <td data-label="État">
                   <button
                     className={`admin-pill ${isAvailable(p) ? 'on' : 'off'}`}
                     onClick={() => handleToggle(p)}
@@ -592,7 +594,7 @@ function OrdersTable({ orders, products, pendingIds, onFlash }: OrdersTableProps
             .join(' ');
           return (
             <tr key={o.id} className={rowClass}>
-              <td className="cell-price">
+              <td className="cell-price" data-label="Réf">
                 <div className="cell-ref">
                   {o.reference ?? o.id.slice(0, 8)}
                   <span className={`admin-pill ${o.channel === 'web' ? 'web' : ''}`}>
@@ -600,28 +602,32 @@ function OrdersTable({ orders, products, pendingIds, onFlash }: OrdersTableProps
                   </span>
                 </div>
               </td>
-              <td>
-                <strong>{o.customerName ?? '—'}</strong>
-                {o.customerPhone && <small> {o.customerPhone}</small>}
-                {o.note && <div className="cell-note">⚠ {o.note}</div>}
+              <td data-label="Client">
+                <div className="cell-stack">
+                  <strong>{o.customerName ?? '—'}</strong>
+                  {o.customerPhone && <small>{o.customerPhone}</small>}
+                  {o.note && <div className="cell-note">⚠ {o.note}</div>}
+                </div>
               </td>
-              <td className="cell-articles">
-                {(o.items ?? []).map((it, i) => (
-                  <div key={`${o.id}-${i}`} className="cell-article">
-                    <span>
-                      {it.qty}× {it.name}
-                      {it.variant === 'menu' ? ' (menu)' : ''}
-                    </span>
-                    {it.optionsSummary && (
-                      <small className="cell-options">{it.optionsSummary}</small>
-                    )}
-                  </div>
-                )) || '—'}
+              <td className="cell-articles" data-label="Articles">
+                <div className="cell-stack">
+                  {(o.items ?? []).map((it, i) => (
+                    <div key={`${o.id}-${i}`} className="cell-article">
+                      <span>
+                        {it.qty}× {it.name}
+                        {it.variant === 'menu' ? ' (menu)' : ''}
+                      </span>
+                      {it.optionsSummary && (
+                        <small className="cell-options">{it.optionsSummary}</small>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </td>
-              <td className="cell-pickup">
+              <td className="cell-pickup" data-label="Retrait">
                 {o.pickup ? formatPickup(o.pickup) : '—'}
               </td>
-              <td className="cell-price">
+              <td className="cell-price" data-label="Total">
                 <div className="cell-ref">
                   {formatPrice(o.total ?? 0)}
                   {check && !check.ok && (
@@ -631,10 +637,10 @@ function OrdersTable({ orders, products, pendingIds, onFlash }: OrdersTableProps
                   )}
                 </div>
               </td>
-              <td className="cell-price">
+              <td className="cell-price" data-label="Heure">
                 {o.createdAt ? new Date(o.createdAt).toLocaleTimeString('fr-FR') : '—'}
               </td>
-              <td>
+              <td data-label="Statut">
                 <span className={`admin-pill ${o.status === 'nouvelle' ? 'on' : 'off'}`}>
                   {ORDER_STATUS_LABELS[o.status] ?? o.status}
                 </span>

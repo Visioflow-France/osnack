@@ -22,6 +22,14 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Réglages du site (réseaux sociaux, Uber Eats, Deliveroo…) : doc unique
+    // `site_settings/links`, lecture publique (écoute temps réel du site),
+    // écriture admin uniquement. Champ vide = retour à la valeur par défaut.
+    match /site_settings/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Menu vitrine : lecture publique (API /api/menu côté serveur, cache ISR),
     // écriture admin uniquement.
     match /menu/{doc} {
@@ -75,7 +83,8 @@ service cloud.firestore {
         || (
           request.resource.data.keys().hasOnly([
             'reference','status','channel','customerName','customerPhone',
-            'customerEmail','uid','pickup','note','items','total','createdAt'
+            'customerEmail','uid','pickup','note','items','total','createdAt',
+            'paidWithPoints','pointsSpent'
           ])
           && request.resource.data.status == 'nouvelle'
           && request.resource.data.channel == 'web'
@@ -93,12 +102,22 @@ service cloud.firestore {
               || (request.resource.data.note is string
                   && request.resource.data.note.size() <= 300))
           // uid : absent (invité) OU égal à l'uid authentifié (anti-usurpation).
+          // Une commande avec cadeaux points (paidWithPoints) exige un compte :
+          // le débit du solde fidélité se fait dans la même transaction client.
           && (
             (request.auth == null && !('uid' in request.resource.data))
             || (request.auth != null
                 && 'uid' in request.resource.data
                 && request.resource.data.uid == request.auth.uid)
           )
+          // Cadeaux points : flag booléen vrai + total de points débités borné.
+          && (!('paidWithPoints' in request.resource.data)
+              || request.resource.data.paidWithPoints == true)
+          && (!('pointsSpent' in request.resource.data)
+              || (request.resource.data.pointsSpent is int
+                  && request.resource.data.pointsSpent >= 1
+                  && request.resource.data.pointsSpent <= 100000
+                  && request.resource.data.paidWithPoints == true))
           // Retrait : ASAP (sans date) ou créneau programmé plausible
           // (entre -15 min et +7 j — tolère l'horloge cliente qui dérive).
           && request.resource.data.pickup is map
@@ -117,7 +136,7 @@ service cloud.firestore {
           && request.resource.data.items.size() <= 40
           && request.resource.data.items.all(x,
                x is map
-               && x.keys().hasOnly(['productId','name','qty','price','variant','options','optionsSummary'])
+               && x.keys().hasOnly(['productId','name','qty','price','variant','options','optionsSummary','paidWithPoints','pointsSpent'])
                && x.productId is string
                && x.productId.size() >= 1
                && x.productId.size() <= 40
@@ -144,6 +163,17 @@ service cloud.firestore {
                             && o.price is number
                             && o.price >= 0
                             && o.price <= 10)))
+               // Cadeau fidélité : flag vrai, prix 0 €, 1 seul exemplaire et
+               // palier de points débités explicite (revérifié côté dashboard
+               // contre GIFT_TIERS — lib/orderCheck.ts).
+               && (!('paidWithPoints' in x) || x.paidWithPoints == true)
+               && (!('pointsSpent' in x)
+                   || (x.pointsSpent is int
+                       && x.pointsSpent >= 1
+                       && x.pointsSpent <= 100000
+                       && x.paidWithPoints == true))
+               && (!('paidWithPoints' in x)
+                   || (x.price == 0 && x.qty == 1 && ('pointsSpent' in x)))
              )
           && request.resource.data.total is number
           && request.resource.data.total >= 0

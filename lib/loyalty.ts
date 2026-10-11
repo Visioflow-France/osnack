@@ -220,35 +220,14 @@ export async function redeemCode(
   }
 }
 
-/** Échange des points contre un cadeau (client, au comptoir). */
-export async function claimGift(
-  uid: string,
-  tier: GiftTier,
-): Promise<{ ok: boolean; error?: string }> {
-  if (!db) return { ok: false, error: 'Firebase non configuré' };
-  try {
-    await runTransaction(db, async (tx) => {
-      const userRef = loyaltyDocRef(uid);
-      const snap = await tx.get(userRef);
-      if (!snap.exists()) throw new Error('no-points');
-      const profile = snap.data() as LoyaltyProfile;
-      if ((profile.points ?? 0) < tier.threshold) throw new Error('not-enough');
-      tx.set(
-        userRef,
-        {
-          points: profile.points - tier.threshold,
-          spent: (profile.spent ?? 0) + tier.threshold,
-          updatedAt: Date.now(),
-        },
-        { merge: true },
-      );
-    });
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'unknown';
-    return { ok: false, error: msg };
-  }
-}
+/**
+ * Débit des points des cadeaux d'une commande, dans la MÊME transaction que
+ * la création de la commande (voir lib/orderSubmit.ts) — jamais séparément,
+ * pour qu'un client ne puisse pas perdre des points sans commander.
+ */
+export const GIFT_POINTS_ERRORS = {
+  'not-enough-points': 'Il ne vous reste plus assez de points pour ce cadeau.',
+} as const;
 
 /** Normalise la saisie : OS-4f7b2k → OS-4F7B2K (l'utilisateur oublie souvent le préfixe). */
 export function normalizeCode(input: string): string {

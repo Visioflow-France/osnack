@@ -1,5 +1,5 @@
 import { deleteApp, getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { initializeFirestore, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
 
 /**
@@ -31,7 +31,13 @@ let _auth: Auth | null = null;
 
 if (isFirebaseConfigured) {
   _app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  _db = getFirestore(_app);
+  // ignoreUndefinedProperties : les objets construits avec des champs
+  // conditionnels (commande sans note, invité sans uid…) contiennent
+  // `undefined` ; sans ce réglage le SDK lève « Unsupported field value :
+  // undefined » au lieu d'ignorer le champ. S'applique à toutes les écritures
+  // (commandes, fidélité, réglages) — les rules Firestore vérifient l'absence
+  // des champs, qui reste le comportement obtenu.
+  _db = initializeFirestore(_app, { ignoreUndefinedProperties: true });
   _auth = getAuth(_app);
 }
 

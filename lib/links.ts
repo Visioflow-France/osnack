@@ -1,5 +1,7 @@
 // Liens externes centralisés du restaurant O'Snack Torcy.
-// Modifier ici pour mettre à jour tous les boutons du site en un seul endroit.
+// Ces valeurs servent de DÉFAUTS : le dashboard admin (onglet « Liens &
+// réseaux ») peut les remplacer à chaud via Firestore (lib/siteSettings.ts).
+// Modifier ici pour changer les valeurs par défaut de tout le site.
 export const LINKS = {
   address: '57 Rue de Paris, 77200 Torcy',
   addressQuery: 'https://maps.google.com/?q=57+Rue+de+Paris+77200+Torcy',
@@ -15,11 +17,12 @@ export const LINKS = {
   deliveroo: 'https://deliveroo.fr/fr/search?q=O%27Snack%20Torcy',
 
   // Réseaux sociaux
-  instagram: 'https://www.instagram.com/osnackofficiel/',
-  // ⚠️ À confirmer : page Facebook exacte. Recherche utilisée en attendant.
-  facebook: 'https://www.facebook.com/search/top?q=O%27Snack%20Torcy',
-  // ⚠️ À confirmer : compte TikTok exact. Recherche utilisée en attendant.
-  tiktok: 'https://www.tiktok.com/search?q=O%27Snack%20Torcy',
+  instagram: 'https://www.instagram.com/osnacktorcy/',
+  // Lien de partage Facebook fourni par le restaurant (redirige vers la page).
+  facebook: 'https://www.facebook.com/share/1J7AXsE6mP/',
+  tiktok: 'https://www.tiktok.com/@osnack.torcy',
+  // Twitter / X
+  twitter: 'https://x.com/osnacktorcy',
   // ⚠️ À confirmer : compte Snapchat exact. Recherche utilisée en attendant.
   snapchat: 'https://www.snapchat.com/explore/O_Snack_Torcy',
 } as const;

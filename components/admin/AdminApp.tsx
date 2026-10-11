@@ -36,6 +36,7 @@ import { ProductForm } from './ProductForm';
 import { OrderForm } from './OrderForm';
 import { LoyaltyAdmin } from './LoyaltyAdmin';
 import { HomeSlidesAdmin } from './HomeSlidesAdmin';
+import { SiteLinksAdmin } from './SiteLinksAdmin';
 
 export function AdminApp() {
   const [user, setUser] = useState<User | null>(null);
@@ -174,7 +175,7 @@ function Login() {
 
 /* ------------------------------- Dashboard ------------------------------- */
 
-type Tab = 'accueil' | 'carte' | 'commandes' | 'fidelite';
+type Tab = 'accueil' | 'carte' | 'commandes' | 'fidelite' | 'liens';
 
 function Dashboard({ user }: { user: User }) {
   // Menu admin : chargé UNE fois via /api/menu (cache ISR) — pas de boucle.
@@ -309,12 +310,20 @@ function Dashboard({ user }: { user: User }) {
         >
           Fidélité
         </button>
+        <button
+          className={`admin-tab ${tab === 'liens' ? 'active' : ''}`}
+          onClick={() => setTab('liens')}
+        >
+          Liens &amp; réseaux
+        </button>
       </div>
 
       {tab === 'fidelite' ? (
         <LoyaltyAdmin user={user} />
       ) : tab === 'accueil' ? (
         <HomeSlidesAdmin />
+      ) : tab === 'liens' ? (
+        <SiteLinksAdmin />
       ) : (
         <>
           <div className="admin-toolbar">
@@ -600,6 +609,14 @@ function OrdersTable({ orders, products, pendingIds, onFlash }: OrdersTableProps
                   <span className={`admin-pill ${o.channel === 'web' ? 'web' : ''}`}>
                     {o.channel === 'web' ? 'Web' : 'Comptoir'}
                   </span>
+                  {o.paidWithPoints && (
+                    <span
+                      className="admin-pill points"
+                      title={`Commande contenant des cadeaux payés en points de fidélité — ${o.pointsSpent ?? '?'} pts débités. Le total affiché est la partie payée en euros.`}
+                    >
+                      Fidélité · {o.pointsSpent ?? '?'} pts
+                    </span>
+                  )}
                 </div>
               </td>
               <td data-label="Client">
@@ -616,6 +633,14 @@ function OrdersTable({ orders, products, pendingIds, onFlash }: OrdersTableProps
                       <span>
                         {it.qty}× {it.name}
                         {it.variant === 'menu' ? ' (menu)' : ''}
+                        {it.paidWithPoints && (
+                          <span
+                            className="admin-pill points"
+                            title="Article offert, payé avec les points de fidélité du client"
+                          >
+                            payé en points
+                          </span>
+                        )}
                       </span>
                       {it.optionsSummary && (
                         <small className="cell-options">{it.optionsSummary}</small>

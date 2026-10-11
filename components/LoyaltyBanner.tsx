@@ -62,8 +62,8 @@ export function LoyaltyBanner() {
           </h2>
           <p className="loyalty-text">
             Chaque euro dépensé vous rapporte un point. À chaque palier
-            atteint, un cadeau de la carte vous attend — offert, au comptoir
-            comme en livraison.
+            atteint, un cadeau de la carte vous attend — offert, ajouté
+            directement à votre commande en ligne.
           </p>
 
           {/* Paliers — l'équivalent des badges store chez BK. */}

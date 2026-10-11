@@ -47,6 +47,13 @@ export interface OrderItem {
   optionsSummary?: string;
   /** Options structurées, pour le re-calcul admin anti-fraude. */
   options?: { label: string; price: number }[];
+  /**
+   * True = article offert via les points fidélité (palier GIFT_TIERS).
+   * price est alors 0 € et pointsSpent contient le palier débité.
+   */
+  paidWithPoints?: boolean;
+  /** Points fidélité débités pour cet article (si paidWithPoints). */
+  pointsSpent?: number;
 }
 
 /** Canal d'origine d'une commande — absent = comptoir (commandes historiques). */
@@ -77,8 +84,10 @@ export interface Order {
   note?: string;
   /** Points fidélité crédités au passage en « livree » (garde anti-double-crédit). */
   pointsCredited?: number;
-  /** True si la commande a été réglée en points de fidélité. */
+  /** True si la commande contient au moins un article payé en points fidélité. */
   paidWithPoints?: boolean;
+  /** Total des points fidélité débités pour les cadeaux de la commande. */
+  pointsSpent?: number;
   items: OrderItem[];
   total: number;
   /** ms epoch */

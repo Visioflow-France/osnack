@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { LINKS } from '@/lib/links';
+import { useSiteLinks } from '@/lib/useSiteLinks';
 import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
 
 // Image de fond du hero, servie de façon responsive via <picture> :
@@ -20,6 +21,8 @@ const HERO_IMG_DESKTOP = '/hero-desktop.webp';
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  // Uber Eats / Deliveroo : liens éditables dans l'admin (défauts lib/links.ts).
+  const { links } = useSiteLinks();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -94,7 +97,7 @@ export function Hero() {
             <span className="btn-arrow">→</span>
           </a>
           <a
-            href={LINKS.uberEats}
+            href={links.uberEats}
             target="_blank"
             rel="noreferrer"
             className="order-btn order-btn--uber"
@@ -105,7 +108,7 @@ export function Hero() {
             <span className="btn-arrow">→</span>
           </a>
           <a
-            href={LINKS.deliveroo}
+            href={links.deliveroo}
             target="_blank"
             rel="noreferrer"
             className="order-btn order-btn--deliveroo"

@@ -21,6 +21,14 @@ const STORAGE_KEY = 'osnack.cart.v1';
 const MAX_LINES = 40;
 export const MAX_QTY = 30;
 
+/** Un cadeau fidélité porté par une ligne (palier GIFT_TIERS de lib/loyalty). */
+export interface CartGift {
+  /** Points qui seront débités à l'envoi de la commande. */
+  threshold: number;
+  /** Libellé du palier (« Boisson offerte »…), affiché au checkout. */
+  label: string;
+}
+
 /** Une ligne = une configuration précise d'un article (variante + options). */
 export interface CartLine {
   /** productId | variant | options triées — deux configs coexistent. */
@@ -32,6 +40,11 @@ export interface CartLine {
   qty: number;
   /** Cache d'affichage — TOUJOURS recalculé au checkout contre la carte. */
   unitPrice: number;
+  /**
+   * Présent = article offert via les points fidélité : 0 € facturé, points
+   * débités à l'envoi de la commande (transaction lib/orderSubmit.ts).
+   */
+  loyaltyGift?: CartGift;
 }
 
 export function lineKey(
@@ -59,6 +72,22 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+/** Valide un cadeau fidélité chargé du localStorage (shape, bornes). */
+function sanitizeGift(g: unknown): CartGift | undefined {
+  if (typeof g !== 'object' || g === null) return undefined;
+  const gift = g as Partial<CartGift>;
+  if (
+    typeof gift.threshold !== 'number' ||
+    gift.threshold < 1 ||
+    gift.threshold > 100000 ||
+    typeof gift.label !== 'string' ||
+    gift.label.length > 60
+  ) {
+    return undefined;
+  }
+  return { threshold: gift.threshold, label: gift.label };
+}
+
 /** Valide une ligne chargée du localStorage (shape, bornes). */
 function sanitize(line: unknown): CartLine | null {
   if (typeof line !== 'object' || line === null) return null;
@@ -82,14 +111,19 @@ function sanitize(line: unknown): CartLine | null {
       typeof o.groupId === 'string' &&
       typeof o.groupLabel === 'string',
   );
+  const loyaltyGift = sanitizeGift(l.loyaltyGift);
   return {
     key: l.key,
     productId: l.productId,
     productName: l.productName,
     variant: l.variant,
     options,
-    qty: Math.min(MAX_QTY, Math.max(1, Math.round(l.qty))),
+    // Un cadeau reste limité à 1 exemplaire, quoi qu'il arrive.
+    qty: loyaltyGift
+      ? 1
+      : Math.min(MAX_QTY, Math.max(1, Math.round(l.qty))),
     unitPrice: l.unitPrice,
+    ...(loyaltyGift ? { loyaltyGift } : {}),
   };
 }
 
@@ -124,13 +158,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [lines, ready]);
 
   const addLine = useCallback((line: Omit<CartLine, 'key'>) => {
-    const key = lineKey(line.productId, line.variant, line.options);
+    // Clé dédiée pour un cadeau fidélité : il ne fusionne jamais avec une
+    // ligne « normale » du même produit, et deux clics restent 1 exemplaire.
+    const key = line.loyaltyGift
+      ? `gift|${line.productId}|${line.loyaltyGift.threshold}`
+      : lineKey(line.productId, line.variant, line.options);
     setLines((prev) => {
       const existing = prev.find((l) => l.key === key);
       if (existing) {
         return prev.map((l) =>
           l.key === key
-            ? { ...l, qty: Math.min(MAX_QTY, l.qty + line.qty) }
+            ? { ...l, qty: l.loyaltyGift ? 1 : Math.min(MAX_QTY, l.qty + line.qty) }
             : l,
         );
       }
@@ -143,7 +181,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       qty <= 0
         ? prev.filter((l) => l.key !== key)
         : prev.map((l) =>
-            l.key === key ? { ...l, qty: Math.min(MAX_QTY, Math.round(qty)) } : l,
+            l.key === key
+              ? { ...l, qty: l.loyaltyGift ? 1 : Math.min(MAX_QTY, Math.round(qty)) }
+              : l,
           ),
     );
   }, []);
@@ -156,7 +196,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => {
     const count = lines.reduce((sum, l) => sum + l.qty, 0);
-    const total = Math.round(lines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0) * 100) / 100;
+    // Total à payer : les cadeaux fidélité (0 € facturé) sont exclus —
+    // le bandeau panier affiche toujours le montant réellement dû.
+    const total =
+      Math.round(
+        lines.reduce(
+          (sum, l) => (l.loyaltyGift ? sum : sum + l.unitPrice * l.qty),
+          0,
+        ) * 100,
+      ) / 100;
     return { lines, ready, count, total, addLine, setQty, removeLine, clear };
   }, [lines, ready, addLine, setQty, removeLine, clear]);
 

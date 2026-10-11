@@ -10,9 +10,9 @@ import {
   giftProduct,
   normalizeCode,
   redeemCode,
-  claimGift,
   type LoyaltyProfile,
 } from '@/lib/loyalty';
+import { useCart } from './CartContext';
 import { useProducts } from '@/lib/useProducts';
 import { isAvailable, type Product } from '@/lib/menu';
 import { formatPrice } from '@/lib/format';
@@ -236,6 +236,7 @@ function AccountDashboard({
 }) {
   const { logout } = useAuth();
   const { products } = useProducts();
+  const { lines, addLine } = useCart();
   const points = profile?.points ?? 0;
   const maxTier = Math.max(...GIFT_TIERS.map((t) => t.threshold));
   const firstName = user.displayName?.trim() || user.email?.split('@')[0] || 'client';
@@ -245,7 +246,6 @@ function AccountDashboard({
     kind: 'idle' | 'loading' | 'ok' | 'error';
     message?: string;
   }>({ kind: 'idle' });
-  const [giftBusy, setGiftBusy] = useState<number | null>(null);
   const [giftState, setGiftState] = useState<{
     kind: 'ok' | 'error';
     message: string;
@@ -282,25 +282,35 @@ function AccountDashboard({
     }
   }
 
-  async function handleClaim(tierIndex: number) {
+  /**
+   * Échange d'un palier : le cadeau part dans le panier de commande. Les
+   * points ne sont PAS débités ici — ils le sont à l'envoi de la commande,
+   * dans la même transaction (lib/orderSubmit.ts). Si le client vide son
+   * panier sans commander, il garde ses points.
+   */
+  function handleClaim(tierIndex: number) {
     const tier = GIFT_TIERS[tierIndex];
-    setGiftBusy(tierIndex);
-    setGiftState(null);
-    const res = await claimGift(user.uid, tier);
-    setGiftBusy(null);
-    if (res.ok) {
-      setGiftState({
-        kind: 'ok',
-        message: `${tier.label} ! Il vous reste ${points - tier.threshold} points — présentez-vous au comptoir pour le récupérer.`,
-      });
-    } else if (res.error === 'not-enough') {
+    const gift = visibleProducts.find((p) => p.id === tier.productId);
+    if (!gift) {
       setGiftState({
         kind: 'error',
-        message: `Il vous manque ${tier.threshold - points} points pour ce cadeau.`,
+        message: 'Ce cadeau n’est plus disponible à la carte pour le moment.',
       });
-    } else {
-      setGiftState({ kind: 'error', message: 'Échec de l’échange. Réessayez.' });
+      return;
     }
+    addLine({
+      productId: gift.id,
+      productName: gift.name,
+      variant: 'seul',
+      options: [],
+      qty: 1,
+      unitPrice: gift.price,
+      loyaltyGift: { threshold: tier.threshold, label: tier.label },
+    });
+    setGiftState({
+      kind: 'ok',
+      message: `${tier.label} ajouté à votre commande — ${tier.threshold} points seront débités à l'envoi. Il restera ${points - tier.threshold} points.`,
+    });
   }
 
   return (
@@ -366,15 +376,23 @@ function AccountDashboard({
           <h3 className="account-subtitle">Vos cadeaux</h3>
           {giftState && (
             <p className={`account-redeem-msg ${giftState.kind}`} role="status">
-              {giftState.message}
+              {giftState.message}{' '}
+              {giftState.kind === 'ok' && (
+                <Link href="/commander">
+                  Finaliser ma commande <span className="btn-arrow">→</span>
+                </Link>
+              )}
             </p>
           )}
           <div className="account-tiers-grid">
             {GIFT_TIERS.map((tier, i) => {
-              const gift =
-                visibleProducts.find((p) => p.id === tier.productId) ??
-                giftProduct(tier);
+              const live = visibleProducts.find((p) => p.id === tier.productId);
+              const gift = live ?? giftProduct(tier);
               const unlocked = points >= tier.threshold;
+              // Palier déjà dans le panier (1 exemplaire max par palier).
+              const inCart = lines.some(
+                (l) => l.loyaltyGift?.threshold === tier.threshold,
+              );
               return (
                 <div key={tier.threshold} className={`account-tier ${unlocked ? 'unlocked' : ''}`}>
                   <div className="account-tier-gift">
@@ -387,15 +405,17 @@ function AccountDashboard({
                   </div>
                   <button
                     className="btn account-tier-btn"
-                    disabled={!unlocked || giftBusy === i}
+                    disabled={!unlocked || inCart || !live}
                     onClick={() => handleClaim(i)}
                     data-cursor-hover
                   >
-                    {unlocked
-                      ? giftBusy === i
-                        ? 'Échange…'
-                        : 'Échanger'
-                      : `Dans ${tier.threshold - points} pts`}
+                    {!live
+                      ? 'Indisponible'
+                      : !unlocked
+                        ? `Dans ${tier.threshold - points} pts`
+                        : inCart
+                          ? '✓ Dans votre commande'
+                          : 'Ajouter à ma commande'}
                   </button>
                 </div>
               );
@@ -404,8 +424,8 @@ function AccountDashboard({
         </div>
 
         <p className="account-foot-note">
-          Les cadeaux se récupèrent au comptoir, en donnant votre e-mail après
-          l&apos;échange.{' '}
+          Vos cadeaux s&apos;ajoutent à votre commande en ligne — les points ne
+          sont débités qu&apos;à l&apos;envoi de la commande.{' '}
           <Link href="/carte">Voir la carte <span className="btn-arrow">→</span></Link>
         </p>
       </div>

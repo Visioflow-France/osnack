@@ -2799,6 +2799,31 @@
     color: #ff8a80;
   }
   .checkout-line-flag.ok { color: #69f0ae; }
+
+  /* Ligne cadeau fidélité : badge ambre, quantité verrouillée, prix offert. */
+  .checkout-line-flag.gift { color: #ffd166; }
+  .checkout-qty.locked { opacity: 0.75; cursor: help; }
+  .checkout-line-price.gift { color: #ffd166; }
+  .checkout-line-price.gift s { opacity: 0.55; margin-right: 0.45rem; }
+
+  /* Récap cadeaux points avant envoi : compte requis / solde / débit. */
+  .checkout-gift-note {
+    background: rgba(255, 209, 102, 0.08);
+    border: 1px solid rgba(255, 209, 102, 0.35);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: #ffd166;
+    margin-bottom: 0.9rem;
+  }
+  .checkout-gift-note a { color: #ffd166; text-decoration: underline; }
+  .checkout-gift-note.is-error {
+    background: rgba(255, 138, 128, 0.1);
+    border-color: rgba(255, 138, 128, 0.45);
+    color: #ff8a80;
+  }
+  .checkout-gift-note.is-error a { color: #ff8a80; }
   .checkout-line-side {
     display: flex;
     align-items: center;
@@ -3099,6 +3124,13 @@
   }
   .confirm-pay strong { font-size: 1.05rem; }
   .confirm-pay span { font-size: 0.82rem; opacity: 0.75; }
+  .confirm-line-price.gift { color: #ffd166; }
+  .confirm-points {
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.8rem;
+    color: #ffd166;
+    margin: 0.4rem 0 0;
+  }
   .confirm-note { color: var(--text-mute); }
   .confirm-note a { color: var(--text-soft); }
   .confirm-actions {
@@ -3376,6 +3408,51 @@
     cursor: help;
     margin-left: 0.5rem;
     font-size: 0.62rem;
+  }
+  /* Badges cadeaux payés en points fidélité (commandes). */
+  .admin-pill.points {
+    background: rgba(255, 209, 102, 0.14);
+    color: #ffd166;
+    border-color: rgba(255, 209, 102, 0.5);
+    cursor: default;
+    margin-left: 0.5rem;
+    font-size: 0.62rem;
+  }
+  .cell-article .admin-pill.points {
+    margin-left: 0.45rem;
+    text-transform: none;
+    letter-spacing: 0.04em;
+  }
+
+  /* ---- Onglet « Liens & réseaux » ---- */
+  .admin-links {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 760px;
+  }
+  .admin-links-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+  }
+  .admin-links-row .admin-field { flex: 1; }
+  .admin-links-actions {
+    display: flex;
+    gap: 0.4rem;
+    padding-bottom: 0.35rem;
+    flex-shrink: 0;
+  }
+  .admin-links-flag {
+    font-style: normal;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #ffd166;
+    margin-left: 0.5rem;
+    cursor: help;
   }
   .cell-ref {
     display: flex;
@@ -4031,6 +4108,12 @@
       color: var(--text-mute);
       text-align: left;
     }
+    .admin-links-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+    .admin-links-actions { padding-bottom: 0; }
     /* Contenus multi-lignes (client, articles) empilés côté valeur. */
     .cell-stack {
       display: flex;

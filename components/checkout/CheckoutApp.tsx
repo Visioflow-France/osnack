@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '../AuthContext';
 import { useCart, type CartLine } from '../CartContext';
 import { useProducts } from '@/lib/useProducts';
-import { createOrder, type OrderItem } from '@/lib/products';
+import { submitWebOrder } from '@/lib/orderSubmit';
+import { type Order, type OrderItem } from '@/lib/products';
 import { scrollToTop } from '@/lib/scrollLock';
 import { computeUnitPrice, summarizeOptions } from '@/lib/options';
 import {
@@ -26,9 +27,12 @@ import { Reveal } from '../Reveal';
  *
  * Une seule vue verticale : panier réconcilié contre la carte (ISR ≤ 5 min),
  * choix du retrait (ASAP / créneau), coordonnées, précisions, soumission.
- * La soumission écrit EXACTEMENT un document Firestore (addDoc orders) — aucune
- * lecture directe : le menu vient de /api/menu (cache), la confirmation est de
- * l'état client pur persisté en sessionStorage (survit au F5).
+ * La soumission écrit EXACTEMENT un document Firestore (orders) — sans
+ * cadeau : simple création ; avec cadeaux fidélité : le débit des points et
+ * la création se jouent dans une même transaction (lib/orderSubmit.ts).
+ * Aucune lecture directe : le menu vient de /api/menu (cache), la
+ * confirmation est de l'état client pur persisté en sessionStorage (survit
+ * au F5).
  */
 
 const CONFIRM_KEY = 'osnack.confirm.v1';
@@ -53,9 +57,18 @@ interface ConfirmPayload {
   reference: string;
   customerName: string;
   total: number;
+  /** Points fidélité débités par les cadeaux de la commande (0 sinon). */
+  pointsSpent?: number;
   pickup: { mode: 'asap' | 'scheduled'; at?: number };
   createdAt: number;
-  lines: { name: string; qty: number; optionsSummary?: string; lineTotal: number }[];
+  lines: {
+    name: string;
+    qty: number;
+    optionsSummary?: string;
+    lineTotal: number;
+    /** Points débités pour ce cadeau (article offert). */
+    giftPoints?: number;
+  }[];
 }
 
 /** Une ligne du panier confrontée à la carte courante. */
@@ -71,7 +84,7 @@ interface CheckedLine {
 
 export function CheckoutApp() {
   const { lines, ready, setQty, removeLine, clear: clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, profile, ready: authReady } = useAuth();
   const { products, loading } = useProducts();
 
   const [confirmed, setConfirmed] = useState<ConfirmPayload | null>(null);
@@ -109,10 +122,36 @@ export function CheckoutApp() {
   );
 
   const blockedCount = checked.filter((c) => c.blocked).length;
+
+  /* ---- Cadeaux fidélité (payés en points, 0 € facturé) ---- */
+
+  const hasGifts = lines.some((l) => !!l.loyaltyGift);
+  const giftPoints = useMemo(
+    () =>
+      checked.reduce(
+        (sum, c) =>
+          c.blocked || !c.line.loyaltyGift
+            ? sum
+            : sum + c.line.loyaltyGift.threshold * c.line.qty,
+        0,
+      ),
+    [checked],
+  );
+  const pointsBalance = profile?.points ?? 0;
+  // Solde pas encore chargé (auth prête, profil en route) → pas de blocage
+  // anticipé : la transaction Firestore revalide le solde à l'envoi.
+  const pointsChecked = hasGifts && user != null && authReady && profile != null;
+  const missingPoints =
+    pointsChecked && user ? Math.max(0, giftPoints - pointsBalance) : 0;
+
   const total = useMemo(
     () =>
       Math.round(
-        checked.reduce((sum, c) => (c.blocked ? sum : sum + c.unit * c.line.qty), 0) * 100,
+        checked.reduce(
+          (sum, c) =>
+            c.blocked || c.line.loyaltyGift ? sum : sum + c.unit * c.line.qty,
+          0,
+        ) * 100,
       ) / 100,
     [checked],
   );
@@ -182,6 +221,9 @@ export function CheckoutApp() {
     name.trim().length >= 1 &&
     PHONE_RE.test(phone.trim()) &&
     (mode === 'asap' || slotAt != null) &&
+    // Cadeaux fidélité : compte connecté obligatoire (débit des points à
+    // l'envoi) et solde suffisant — revérifié dans la transaction Firestore.
+    (!hasGifts || (user != null && missingPoints === 0)) &&
     !submitting;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -198,6 +240,17 @@ export function CheckoutApp() {
       const items: OrderItem[] = checked
         .filter((c) => !c.blocked)
         .map(({ line, unit }) => {
+          // Cadeau fidélité : 0 € facturé, palier débité en transaction.
+          if (line.loyaltyGift) {
+            return {
+              productId: line.productId,
+              name: line.productName,
+              qty: 1,
+              price: 0,
+              paidWithPoints: true,
+              pointsSpent: line.loyaltyGift.threshold,
+            } satisfies OrderItem;
+          }
           const item: OrderItem = {
             productId: line.productId,
             name: line.productName,
@@ -217,20 +270,23 @@ export function CheckoutApp() {
         reference: webReference(),
         customerName: name.trim().slice(0, 40),
         total,
+        ...(giftPoints > 0 ? { pointsSpent: giftPoints } : {}),
         pickup: mode === 'asap' ? { mode: 'asap' } : { mode: 'scheduled', at: slotAt! },
         createdAt: Date.now(),
         lines: checked
           .filter((c) => !c.blocked)
           .map(({ line, unit }) => ({
             name: line.productName,
-            qty: line.qty,
-            optionsSummary:
-              summarizeOptions(line.variant, line.options) || undefined,
-            lineTotal: Math.round(unit * line.qty * 100) / 100,
+            qty: line.loyaltyGift ? 1 : line.qty,
+            optionsSummary: line.loyaltyGift
+              ? `Cadeau fidélité · ${line.loyaltyGift.label}`
+              : summarizeOptions(line.variant, line.options) || undefined,
+            lineTotal: line.loyaltyGift ? 0 : Math.round(unit * line.qty * 100) / 100,
+            ...(line.loyaltyGift ? { giftPoints: line.loyaltyGift.threshold } : {}),
           })),
       };
 
-      await createOrder({
+      const order: Omit<Order, 'id'> = {
         reference: payload.reference,
         status: 'nouvelle',
         channel: 'web',
@@ -243,7 +299,12 @@ export function CheckoutApp() {
         items,
         total: payload.total,
         createdAt: payload.createdAt,
-      });
+        // Débit des points + création de la commande en UNE transaction.
+        ...(giftPoints > 0
+          ? { paidWithPoints: true as const, pointsSpent: giftPoints }
+          : {}),
+      };
+      await submitWebOrder(order, giftPoints);
 
       try {
         sessionStorage.setItem(CONFIRM_KEY, JSON.stringify(payload));
@@ -254,9 +315,20 @@ export function CheckoutApp() {
       clearCart();
     } catch (err) {
       console.error('[checkout] submit failed:', err);
-      setError(
-        "L'envoi a échoué. Vérifiez votre connexion puis réessayez — votre commande est intacte.",
-      );
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('not-enough-points')) {
+        setError(
+          'Vos points de fidélité sont insuffisants pour les cadeaux de ce panier — retirez-les puis réessayez.',
+        );
+      } else if (msg.includes('gift-requires-account')) {
+        setError(
+          'Connectez-vous à votre compte fidélité pour commander vos cadeaux.',
+        );
+      } else {
+        setError(
+          "L'envoi a échoué. Vérifiez votre connexion puis réessayez — votre commande est intacte.",
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -332,47 +404,69 @@ export function CheckoutApp() {
             {checked.map(({ line, blocked, unit, priceChanged }) => (
               <div
                 key={line.key}
-                className={`checkout-line ${blocked ? 'is-blocked' : ''}`}
+                className={`checkout-line ${blocked ? 'is-blocked' : ''} ${
+                  line.loyaltyGift ? 'is-gift' : ''
+                }`}
               >
                 <div className="checkout-line-main">
                   <span className="checkout-line-name">
                     {line.productName}
-                    <span className="checkout-line-qty-tag">× {line.qty}</span>
+                    <span className="checkout-line-qty-tag">× {line.loyaltyGift ? 1 : line.qty}</span>
                   </span>
                   {summarizeOptions(line.variant, line.options) && (
                     <small className="checkout-line-options">
                       {summarizeOptions(line.variant, line.options)}
                     </small>
                   )}
+                  {line.loyaltyGift && !blocked && (
+                    <span className="checkout-line-flag gift">
+                      Offert · payé avec {line.loyaltyGift.threshold} points fidélité
+                    </span>
+                  )}
                   {blocked && (
                     <span className="checkout-line-flag">
                       Plus disponible à la carte — retirez cet article
                     </span>
                   )}
-                  {priceChanged && (
+                  {priceChanged && !line.loyaltyGift && (
                     <span className="checkout-line-flag ok">Prix mis à jour selon la carte</span>
                   )}
                 </div>
                 <div className="checkout-line-side">
-                  <div className="checkout-qty">
-                    <button
-                      type="button"
-                      aria-label="Diminuer"
-                      onClick={() => setQty(line.key, line.qty - 1)}
+                  {line.loyaltyGift ? (
+                    <span
+                      className="checkout-qty locked"
+                      title="Cadeau fidélité limité à 1 exemplaire"
                     >
-                      −
-                    </button>
-                    <span>{line.qty}</span>
-                    <button
-                      type="button"
-                      aria-label="Augmenter"
-                      onClick={() => setQty(line.key, line.qty + 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span className="checkout-line-price">
-                    {formatPrice(unit * line.qty)}
+                      1
+                    </span>
+                  ) : (
+                    <div className="checkout-qty">
+                      <button
+                        type="button"
+                        aria-label="Diminuer"
+                        onClick={() => setQty(line.key, line.qty - 1)}
+                      >
+                        −
+                      </button>
+                      <span>{line.qty}</span>
+                      <button
+                        type="button"
+                        aria-label="Augmenter"
+                        onClick={() => setQty(line.key, line.qty + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                  <span className={`checkout-line-price ${line.loyaltyGift ? 'gift' : ''}`}>
+                    {line.loyaltyGift ? (
+                      <>
+                        <s>{formatPrice(unit * line.qty)}</s> Offert
+                      </>
+                    ) : (
+                      formatPrice(unit * line.qty)
+                    )}
                   </span>
                   <button
                     type="button"
@@ -465,9 +559,10 @@ export function CheckoutApp() {
                   <circle cx="12" cy="7" r="4" />
                 </svg>
                 <span>
-                  Commande liée à votre compte <strong>{user.email}</strong> — vos
-                  points fidélité (1 € = 1 pt) seront crédités à la remise de la
-                  commande.
+                  Commande liée à votre compte <strong>{user.email}</strong> —
+                  {hasGifts
+                    ? ` ${giftPoints} points fidélité seront débités à l'envoi, et les points gagnés le seront sur la partie payée en euros (1 € = 1 pt).`
+                    : ' vos points fidélité (1 € = 1 pt) seront crédités à la remise de la commande.'}
                 </span>
               </div>
             )}
@@ -510,6 +605,34 @@ export function CheckoutApp() {
               <span>Total à régler au retrait</span>
               <strong>{formatPrice(total)}</strong>
             </div>
+            {hasGifts && (
+              <div
+                className={`checkout-gift-note ${
+                  user == null || missingPoints > 0 ? 'is-error' : ''
+                }`}
+                role={user == null || missingPoints > 0 ? 'alert' : 'status'}
+              >
+                {user == null ? (
+                  <>
+                    Cette commande contient un cadeau fidélité —{' '}
+                    <Link href="/compte">connectez-vous à votre compte</Link>{' '}
+                    pour l&apos;utiliser ({giftPoints} points requis).
+                  </>
+                ) : missingPoints > 0 ? (
+                  <>
+                    Il vous manque {missingPoints} point
+                    {missingPoints > 1 ? 's' : ''} de fidélité pour les cadeaux
+                    de ce panier (solde : {pointsBalance} pts) — retirez-les ou
+                    rechargez votre solde.
+                  </>
+                ) : (
+                  <>
+                    ✓ {giftPoints} points de fidélité seront débités à l&apos;envoi
+                    de cette commande.
+                  </>
+                )}
+              </div>
+            )}
             {!isFirebaseConfigured && (
               <div className="checkout-error">
                 La commande en ligne n&apos;est pas encore activée. Réessayez dans
@@ -579,7 +702,9 @@ function Confirmation({
                 <small className="confirm-line-options">{l.optionsSummary}</small>
               )}
             </div>
-            <span className="confirm-line-price">{formatPrice(l.lineTotal)}</span>
+            <span className={`confirm-line-price ${l.giftPoints ? 'gift' : ''}`}>
+              {l.giftPoints ? 'Offert' : formatPrice(l.lineTotal)}
+            </span>
           </div>
         ))}
       </div>
@@ -587,10 +712,25 @@ function Confirmation({
         <span>Total</span>
         <strong>{formatPrice(data.total)}</strong>
       </div>
+      {data.pointsSpent ? (
+        <p className="confirm-points" role="status">
+          {data.pointsSpent} points de fidélité utilisés pour les cadeaux de
+          cette commande.
+        </p>
+      ) : null}
 
       <div className="confirm-pay">
-        <strong>À payer au retrait : {formatPrice(data.total)}</strong>
-        <span>En espèces ou par carte bancaire — 57 Rue de Paris, 77200 Torcy</span>
+        {data.pointsSpent && data.total === 0 ? (
+          <>
+            <strong>Réglé avec vos points — rien à payer au retrait.</strong>
+            <span>Présentez votre référence ({data.reference}) au comptoir — 57 Rue de Paris, 77200 Torcy</span>
+          </>
+        ) : (
+          <>
+            <strong>À payer au retrait : {formatPrice(data.total)}</strong>
+            <span>En espèces ou par carte bancaire — 57 Rue de Paris, 77200 Torcy</span>
+          </>
+        )}
       </div>
 
       <p className="confirm-note">

@@ -1,9 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 import { LINKS } from '@/lib/links';
+import { useSiteLinks } from '@/lib/useSiteLinks';
 import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
 import { SocialFollow } from './SocialFollow';
 
 export function Footer() {
+  // Réseaux + plateformes : éditables dans l'admin (défauts lib/links.ts).
+  const { links } = useSiteLinks();
+
   return (
     <footer className="footer" id="contact">
       <div className="footer-grid">
@@ -19,14 +25,14 @@ export function Footer() {
             livraison, au cœur de Torcy — 7 jours sur 7.
           </p>
           <div className="footer-social">
-            <a href={LINKS.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" data-cursor-hover>
+            <a href={links.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" data-cursor-hover>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                 <rect x="3" y="3" width="18" height="18" rx="5" />
                 <circle cx="12" cy="12" r="4" />
                 <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" />
               </svg>
             </a>
-            <a href={LINKS.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" data-cursor-hover>
+            <a href={links.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" data-cursor-hover>
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
               </svg>
@@ -36,7 +42,7 @@ export function Footer() {
             <span className="footer-order-label">Commander en ligne</span>
             <div className="footer-order-row">
               <a
-                href={LINKS.uberEats}
+                href={links.uberEats}
                 target="_blank"
                 rel="noreferrer"
                 className="footer-order-btn footer-order-btn--uber"
@@ -46,7 +52,7 @@ export function Footer() {
                 <UberEatsLogo className="footer-order-logo" />
               </a>
               <a
-                href={LINKS.deliveroo}
+                href={links.deliveroo}
                 target="_blank"
                 rel="noreferrer"
                 className="footer-order-btn footer-order-btn--deliveroo"

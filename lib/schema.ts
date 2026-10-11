@@ -120,7 +120,14 @@ export function siteJsonLd() {
         deliveryMethod: 'https://purl.org/goodrelations/v1#DeliveryModePickUp',
       },
     ],
-    sameAs: [LINKS.instagram, LINKS.uberEats, LINKS.deliveroo],
+    sameAs: [
+      LINKS.instagram,
+      LINKS.facebook,
+      LINKS.tiktok,
+      LINKS.twitter,
+      LINKS.uberEats,
+      LINKS.deliveroo,
+    ],
   };
 
   const website = {

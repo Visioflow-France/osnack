@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from './AuthContext';
 import { useCart } from './CartContext';
 import { LINKS } from '@/lib/links';
+import { useSiteLinks } from '@/lib/useSiteLinks';
 import { UberEatsLogo, DeliverooLogo } from './BrandLogos';
 
 // Barre de navigation flottante (pastille centrée, toujours visible au scroll).
@@ -17,6 +18,8 @@ const NAV_ITEMS = [{ name: 'Carte', link: '/carte' }];
 export function FloatingNav() {
   const { user, profile } = useAuth();
   const { ready, count } = useCart();
+  // Uber Eats / Deliveroo : liens éditables dans l'admin (défauts lib/links.ts).
+  const { links } = useSiteLinks();
 
   // Menu « Commander » : choix du canal (téléphone, site, livraison).
   const [orderOpen, setOrderOpen] = useState(false);
@@ -146,7 +149,7 @@ export function FloatingNav() {
 
               <a
                 role="menuitem"
-                href={LINKS.uberEats}
+                href={links.uberEats}
                 target="_blank"
                 rel="noreferrer"
                 className="floating-nav-order-item"
@@ -164,7 +167,7 @@ export function FloatingNav() {
 
               <a
                 role="menuitem"
-                href={LINKS.deliveroo}
+                href={links.deliveroo}
                 target="_blank"
                 rel="noreferrer"
                 className="floating-nav-order-item"

@@ -61,6 +61,19 @@ export function resetScrollLock(): void {
   clearLockTraces();
 }
 
+/** Remonte la page au sommet — via Lenis si actif (pour rester synchronisé
+ *  avec lui), sinon scroll natif (prefers-reduced-motion : pas d'instance).
+ *  `immediate` évite une longue animation quand le contenu vient d'être
+ *  remplacé (ex. formulaire → confirmation de commande) ; `force` passe
+ *  outre un éventuel verrou résiduel. */
+export function scrollToTop(): void {
+  if (lenisInstance) {
+    lenisInstance.scrollTo(0, { immediate: true, force: true });
+  } else {
+    window.scrollTo(0, 0);
+  }
+}
+
 /** Pose un verrou pour la durée de vie du composant appelant. */
 export function useScrollLock(): void {
   useEffect(() => {

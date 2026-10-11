@@ -24,6 +24,11 @@
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
     overflow-x: clip;
+    /* Même sans contenu plus large que l'écran, le scroller racine peut
+       « rebondir » sur les côtés au doigt (rubber-band iOS/Android) et
+       laisser croire que la page se déplace horizontalement. On coupe ce
+       rebond latéral — le rebond vertical, lui, reste naturel. */
+    overscroll-behavior-x: none;
   }
   body {
     background: var(--bg);

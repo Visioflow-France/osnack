@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../AuthContext';
 import { useCart, type CartLine } from '../CartContext';
 import { useProducts } from '@/lib/useProducts';
 import { createOrder, type OrderItem } from '@/lib/products';
+import { scrollToTop } from '@/lib/scrollLock';
 import { computeUnitPrice, summarizeOptions } from '@/lib/options';
 import {
   ASAP_LEAD_MINUTES,
@@ -188,6 +189,11 @@ export function CheckoutApp() {
     if (!canSubmit) return;
     setError(null);
     setSubmitting(true);
+    // iOS : le champ qui a le focus (clavier ouvert) va être démonté avec le
+    // formulaire. Sans cela, le viewport tactile reste désynchronisé et la
+    // page peut ensuite être « baladée » dans tous les sens, y compris sur
+    // les côtés. On retire le focus avant tout remplacement de contenu.
+    (document.activeElement as HTMLElement | null)?.blur?.();
     try {
       const items: OrderItem[] = checked
         .filter((c) => !c.blocked)
@@ -538,6 +544,14 @@ function Confirmation({
   data: ConfirmPayload;
   onNewOrder: () => void;
 }) {
+  // La confirmation remplace un formulaire bien plus haut, sans navigation :
+  // le navigateur garde alors le scroll au fond de l'ancienne page. On
+  // remonte avant peinture pour que « Commande bien reçue » soit visible
+  // dès l'apparition de l'écran (couvre aussi la restauration après F5).
+  useLayoutEffect(() => {
+    scrollToTop();
+  }, []);
+
   return (
     <div className="confirm">
       <div className="confirm-check" aria-hidden>

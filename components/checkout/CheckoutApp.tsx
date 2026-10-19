@@ -36,7 +36,8 @@ import { Reveal } from '../Reveal';
  */
 
 const CONFIRM_KEY = 'osnack.confirm.v1';
-const PHONE_RE = /^[0-9+ .()\-]{6,20}$/;
+/** Téléphone valide : exactement 10 chiffres (espaces, points, tirets tolérés). */
+const PHONE_RE = /^[0-9](?:[ .\-]?[0-9]){9}$/;
 
 /** Référence web lisible : W-XXXXXX (sans caractères ambigus). */
 function webReference(): string {
@@ -212,6 +213,9 @@ export function CheckoutApp() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const phoneValid = PHONE_RE.test(phone.trim());
+  const showPhoneError = phone.trim() !== '' && !phoneValid;
+
   const canSubmit =
     ready &&
     !loading &&
@@ -219,7 +223,7 @@ export function CheckoutApp() {
     lines.length > 0 &&
     blockedCount === 0 &&
     name.trim().length >= 1 &&
-    PHONE_RE.test(phone.trim()) &&
+    phoneValid &&
     (mode === 'asap' || slotAt != null) &&
     // Cadeaux fidélité : compte connecté obligatoire (débit des points à
     // l'envoi) et solde suffisant — revérifié dans la transaction Firestore.
@@ -581,11 +585,21 @@ export function CheckoutApp() {
                 Téléphone *
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.slice(0, 20))}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/[^0-9 .\-]/g, '').slice(0, 14))
+                  }
                   placeholder="06 12 34 56 78"
                   required
                 />
+                {showPhoneError && (
+                  <small className="checkout-field-error" role="alert">
+                    Numéro invalide — il doit contenir exactement 10 chiffres
+                    (ex. 06 12 34 56 78).
+                  </small>
+                )}
               </label>
               <label className="checkout-field wide">
                 Précisions (facultatif)

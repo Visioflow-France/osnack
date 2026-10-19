@@ -2981,6 +2981,13 @@
   .checkout-field textarea { min-height: 90px; resize: vertical; }
   .checkout-field input:focus,
   .checkout-field textarea:focus { border-color: #fff; }
+  .checkout-field-error {
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #ff8a80;
+  }
 
   /* Total & soumission. */
   .checkout-summary {

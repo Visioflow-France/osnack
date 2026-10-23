@@ -160,3 +160,19 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
     ),
   };
 }
+
+/** Schéma FAQPage (questions/réponses locales des pages villes). */
+export function faqJsonLd(faqs: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.answer,
+      },
+    })),
+  };
+}

@@ -4,6 +4,7 @@ import { Hero } from '@/components/Hero';
 import { LoyaltyBanner } from '@/components/LoyaltyBanner';
 import { CategoryGrid } from '@/components/CategoryGrid';
 import { LocalSeo } from '@/components/LocalSeo';
+import { CitiesGrid } from '@/components/CitiesGrid';
 import { Footer } from '@/components/Footer';
 import { getMenu } from '@/lib/menuDoc';
 import { absoluteUrl } from '@/lib/site';
@@ -53,6 +54,7 @@ export default async function Home() {
         <CategoryGrid />
         <LoyaltyBanner />
         <LocalSeo />
+        <CitiesGrid />
       </main>
       <Footer />
     </>

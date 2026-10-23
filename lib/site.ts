@@ -1,17 +1,18 @@
 /**
  * ── Configuration SEO centrale du site O'Snack Torcy ─────────────────────────
  *
- * ⚠️ DOMAINE : le nom de domaine définitif n'est pas encore connu.
- * Le placeholder ci-dessous est utilisé dans TOUT le site (canonical, Open
- * Graph, JSON-LD, sitemap, robots). Pour le remplacer, DEUX options :
- *   1. Définir la variable d'environnement NEXT_PUBLIC_SITE_URL (recommandé,
- *      aucun changement de code au déploiement) ;
- *   2. Modifier la valeur de SITE_URL ci-dessous.
- * Toutes les URLs absolues du site sont construites via `absoluteUrl()`.
+ * DOMAINE : le site est en ligne sur https://www.osnacktorcy.fr (hébergé sur
+ * Vercel ; osnacktorcy.fr sans www redirige en 308 vers le www, c'est donc
+ * le www qui est l'hôte canonique). Cette URL est utilisée dans TOUT le site
+ * (canonical, Open Graph, JSON-LD, sitemap, robots). Pour la surcharger :
+ * définir la variable d'environnement NEXT_PUBLIC_SITE_URL (déjà posée dans
+ * .env.local et dans le projet Vercel). Toutes les URLs absolues du site
+ * sont construites via `absoluteUrl()`.
  */
 
-/** Domaine placeholder — à remplacer par le domaine définitif. */
-const SITE_URL_PLACEHOLDER = 'https://example.fr';
+/** Domaine canonique du site (sans slash final) — fallback si la variable
+ * d'environnement NEXT_PUBLIC_SITE_URL n'est pas définie. */
+const SITE_URL_PLACEHOLDER = 'https://www.osnacktorcy.fr';
 
 /** URL canonique du site (sans slash final). */
 export const SITE_URL =
@@ -44,20 +45,33 @@ export const GEO = {
   longitude: 2.6535,
 } as const;
 
-/** Mots-clés locaux ciblés (title, description, contenu, JSON-LD). */
+/**
+ * Mots-clés locaux ciblés (title, description, contenu, JSON-LD).
+ * Priorité aux requêtes « fast food / snack / burger + ville » sur Torcy et
+ * les communes environnantes couvertes par les pages villes (lib/cities.ts).
+ */
 export const SEO_KEYWORDS = [
   'snack Torcy',
   'fast food Torcy',
+  'burger Torcy',
   'restauration rapide Torcy',
   'restaurant rapide Torcy',
   'snack 77200',
   'fast food 77200',
-  'burger Torcy',
   'sandwich Torcy',
   'kebab Torcy',
   'crêpe Torcy',
   'à emporter Torcy',
   'livraison Torcy',
+  'fast food Noisiel',
+  'snack Noisiel',
+  'burger Noisiel',
+  'fast food Lognes',
+  'snack Lognes',
+  'burger Lognes',
+  'fast food Collégien',
+  'snack Collégien',
+  'burger Collégien',
   'snack Marne-la-Vallée',
   'fast food Bay 2 Torcy',
   'snack gare de Torcy',
@@ -65,9 +79,16 @@ export const SEO_KEYWORDS = [
   "O'Snack Torcy",
 ];
 
-/** Zones desservies (livraison Uber Eats / Deliveroo, alentours de Torcy). */
+/**
+ * Zones desservies (livraison Uber Eats / Deliveroo, alentours de Torcy).
+ * Les 4 premières villes ont une page dédiée : accueil (Torcy) +
+ * lib/cities.ts (Noisiel, Lognes, Collégien).
+ */
 export const SERVICE_AREAS = [
   'Torcy',
+  'Noisiel',
+  'Lognes',
+  'Collégien',
   'Marne-la-Vallée',
   'Saint-Thibault-des-Vignes',
   'Vaires-sur-Marne',
@@ -75,7 +96,6 @@ export const SERVICE_AREAS = [
   'Pomponne',
   'Chanteloup-en-Brie',
   'Bussy-Saint-Martin',
-  'Collégien',
 ];
 
 /**
@@ -118,8 +138,11 @@ export const SITEMAP_PAGES: { path: string; priority: number; changeFrequency: '
   { path: '/', priority: 1.0, changeFrequency: 'weekly' },
   { path: '/carte', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/commander', priority: 0.9, changeFrequency: 'weekly' },
+  { path: '/fast-food-noisiel', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/fast-food-lognes', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/fast-food-collegien', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/histoire', priority: 0.5, changeFrequency: 'yearly' },
-  { path: '/compte', priority: 0.3, changeFrequency: 'monthly' },
+  // /compte est exclu : robots.txt l'interdit à l'indexation (page client).
   { path: '/mentions-legales', priority: 0.2, changeFrequency: 'yearly' },
   { path: '/cgv', priority: 0.2, changeFrequency: 'yearly' },
   { path: '/confidentialite', priority: 0.2, changeFrequency: 'yearly' },

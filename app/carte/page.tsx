@@ -19,6 +19,16 @@ export const metadata: Metadata = {
     description:
       "Découvrez toute la carte du fast food O'Snack Torcy : burgers gourmets, sandwichs au four, menus, crêpes et milkshakes. À emporter ou en livraison.",
     url: absoluteUrl('/carte'),
+    locale: 'fr_FR',
+    // openGraph de page = remplacement de celui du layout (merge superficiel)
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: "Burger maison O'Snack — snack fast food à Torcy, 57 Rue de Paris",
+      },
+    ],
   },
 };
 

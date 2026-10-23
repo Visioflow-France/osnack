@@ -18,6 +18,16 @@ export const metadata: Metadata = {
     description:
       "Des thermopolia romains au burger gourmet d'aujourd'hui : l'histoire de la street-food et du fast food, racontée par O'Snack Torcy.",
     url: absoluteUrl('/histoire'),
+    locale: 'fr_FR',
+    // openGraph de page = remplacement de celui du layout (merge superficiel)
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: "Burger maison O'Snack — snack fast food à Torcy, 57 Rue de Paris",
+      },
+    ],
   },
 };
 

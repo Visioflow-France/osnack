@@ -135,6 +135,11 @@ export function Footer() {
             <li><Link href="/#reviews" data-cursor-hover>Avis Clients</Link></li>
             <li><Link href="/#contact" data-cursor-hover>Nous Trouver</Link></li>
             <li><Link href="/compte" data-cursor-hover>Mon compte fidélité</Link></li>
+            {/* Maillage interne : pages villes (SEO local Noisiel / Lognes / Collégien) */}
+            <li className="footer-col-sub">Snacks alentour</li>
+            <li><Link href="/fast-food-noisiel" data-cursor-hover>Fast food Noisiel</Link></li>
+            <li><Link href="/fast-food-lognes" data-cursor-hover>Fast food Lognes</Link></li>
+            <li><Link href="/fast-food-collegien" data-cursor-hover>Fast food Collégien</Link></li>
           </ul>
         </div>
       </div>

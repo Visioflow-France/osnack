@@ -17,6 +17,16 @@ export const metadata: Metadata = {
     description:
       "Commande en ligne au snack O'Snack Torcy : retrait dès 20 min ou livraison. Paiement en espèces ou par carte au retrait.",
     url: absoluteUrl('/commander'),
+    locale: 'fr_FR',
+    // openGraph de page = remplacement de celui du layout (merge superficiel)
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: "Burger maison O'Snack — commande en ligne, snack fast food à Torcy",
+      },
+    ],
   },
 };
 

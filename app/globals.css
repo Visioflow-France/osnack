@@ -4712,3 +4712,216 @@
     .local-seo-block { padding: 1.75rem 1.5rem; }
     .local-seo-intro { margin-bottom: 2.5rem; }
   }
+
+  /* ============ PAGES VILLES (fast food Noisiel / Lognes / Collégien) ============ */
+  /* En-tête : fil d'Ariane + H1 unique + intro locale */
+  .city-hero { padding-bottom: 4rem; }
+  .city-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+    margin-bottom: 3rem;
+  }
+  .city-breadcrumb a { color: var(--text-mute); text-decoration: none; }
+  .city-breadcrumb a:hover { color: var(--text); }
+  .city-h1 {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 4.8vw, 3.9rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    margin-bottom: 1.75rem;
+    max-width: 60rem;
+  }
+  .city-intro {
+    max-width: 62rem;
+    color: var(--text-soft);
+    font-size: 1.02rem;
+    line-height: 1.7;
+  }
+  .city-intro strong { color: var(--text); font-weight: 500; }
+  .city-section-title {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.9rem, 4.5vw, 3.4rem);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    margin-bottom: 1.75rem;
+  }
+  .city-block-title {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  /* Section localisation : infos NAP + carte */
+  .city-map-section { background: var(--bg); border-top: 1px solid var(--line-soft); }
+  .city-map-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .city-map-text {
+    color: var(--text-soft);
+    font-size: 0.98rem;
+    line-height: 1.7;
+    max-width: 34rem;
+    margin-bottom: 2rem;
+  }
+  .city-map-text strong { color: var(--text); font-weight: 500; }
+  .city-map-ctas { display: flex; flex-wrap: wrap; gap: 1rem; }
+  .city-cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.85rem 1.5rem;
+    background: var(--text);
+    color: #000;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: opacity .3s var(--ease-quiet);
+  }
+  .city-cta:hover { opacity: 0.85; }
+  .city-cta--ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--line);
+  }
+  .city-map {
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    box-shadow: 0 14px 44px rgba(0, 0, 0, 0.45);
+    line-height: 0;
+  }
+  .city-map iframe {
+    display: block;
+    width: 100%;
+    height: 400px;
+    border: 0;
+  }
+
+  /* FAQ locale : accordéon natif <details> (indexable, 0 JS) */
+  .city-faq-list { max-width: 62rem; border-top: 1px solid var(--line-soft); }
+  .city-faq-item { border-bottom: 1px solid var(--line-soft); }
+  .city-faq-item summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.35rem 0.25rem;
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    transition: color .3s var(--ease-quiet);
+  }
+  .city-faq-item summary::-webkit-details-marker { display: none; }
+  .city-faq-item summary:hover,
+  .city-faq-item[open] summary { color: var(--text); }
+  .city-faq-icon {
+    flex-shrink: 0;
+    font-family: var(--font-ibm), monospace;
+    font-size: 1.2rem;
+    color: var(--text-mute);
+    transition: transform .3s var(--ease-quiet);
+  }
+  .city-faq-item[open] .city-faq-icon { transform: rotate(45deg); }
+  .city-faq-item p {
+    padding: 0 2.5rem 1.5rem 0.25rem;
+    color: var(--text-soft);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 58rem;
+  }
+
+  /* Maillage : cartes des pages villes (accueil + bas des pages villes) */
+  .city-others { background: var(--bg); border-top: 1px solid var(--line-soft); }
+  .cities-grid-section { background: var(--deep-black); border-top: 1px solid var(--line-soft); }
+  .cities-grid-intro {
+    color: var(--text-soft);
+    font-size: 1.02rem;
+    line-height: 1.7;
+    max-width: 60rem;
+    margin-bottom: 3rem;
+  }
+  .cities-grid-intro strong { color: var(--text); font-weight: 500; }
+  .cities-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--line-soft);
+    border: 1px solid var(--line-soft);
+  }
+  .cities-card {
+    background: var(--card);
+    padding: 2rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+  }
+  .cities-card h3 {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .cities-card p {
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+  .cities-card-link {
+    margin-top: auto;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.35rem;
+    transition: border-color .3s var(--ease-quiet);
+  }
+  .cities-card-link:hover { border-color: var(--text); }
+  .cities-card-link .btn-arrow {
+    display: inline-block;
+    transition: transform .3s var(--ease-quiet);
+  }
+  .cities-card-link:hover .btn-arrow { transform: translateX(4px); }
+
+  /* Sous-titre « Snacks alentour » dans la colonne navigation du footer */
+  .footer-col .footer-col-sub {
+    margin-top: 1.1rem;
+    font-family: var(--font-ibm), monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+  }
+
+  @media (max-width: 768px) {
+    .city-map-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .city-map iframe { height: 280px; }
+    .cities-grid { grid-template-columns: 1fr; }
+    .cities-card { padding: 1.75rem 1.5rem; }
+    .city-breadcrumb { margin-bottom: 2.25rem; }
+  }

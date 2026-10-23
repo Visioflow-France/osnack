@@ -1,6 +1,7 @@
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { LINKS } from '@/lib/links';
-import { SERVICE_AREAS } from '@/lib/site';
+import { CITY_LANDINGS } from '@/lib/cities';
 
 /**
  * ── Section contenu local SEO (accueil) ──────────────────────────────────────
@@ -67,7 +68,16 @@ export function LocalSeo() {
               Commandez <strong>en ligne</strong> (paiement au retrait, espèces
               ou carte), sur <strong>Uber Eats</strong> ou{' '}
               <strong>Deliveroo</strong> pour la <strong>livraison à Torcy</strong>{' '}
-              et les communes voisines : {SERVICE_AREAS.slice(1, 6).join(', ')}…
+              et les communes voisines :{' '}
+              {CITY_LANDINGS.map((city, i) => (
+                <Fragment key={city.slug}>
+                  {i > 0 && ', '}
+                  <Link href={city.path} data-cursor-hover>
+                    {city.name}
+                  </Link>
+                </Fragment>
+              ))}
+              , Marne-la-Vallée, Vaires-sur-Marne, Lagny-sur-Marne…
               Retrait dès 20 minutes à la boutique.
             </p>
             <Link href="/carte" className="local-seo-link" data-cursor-hover>

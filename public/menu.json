@@ -6,7 +6,7 @@
       "desc": "Viande grec, pain au four ou tortillas.",
       "price": 6,
       "priceMenu": 7.5,
-      "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/grec.jpg",
       "category": "sandwichs",
       "tag": "Signature",
       "bestseller": true,
@@ -48,7 +48,7 @@
       "desc": "3 steaks 45 g, merguez, poivrons, œuf, fromage.",
       "price": 8,
       "priceMenu": 9.5,
-      "image": "https://images.unsplash.com/photo-1583060095186-852adde6b819?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/orientale.jpg",
       "category": "sandwichs",
       "tag": "Gourmande",
       "order": 15
@@ -89,7 +89,7 @@
       "desc": "3 steaks 45 g, fromage, pain au four ou tortillas.",
       "price": 7,
       "priceMenu": 8.5,
-      "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/le-trio.jpg",
       "category": "sandwichs",
       "order": 19
     },
@@ -99,7 +99,7 @@
       "desc": "Escalope, crème fraîche, champignons.",
       "price": 7.5,
       "priceMenu": 9,
-      "image": "https://images.unsplash.com/photo-1539252554935-80c8cb536cbb?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/fermiere.jpg",
       "category": "sandwichs",
       "order": 20
     },
@@ -109,7 +109,7 @@
       "desc": "3 steaks 45 g, bacon, œuf, fromage.",
       "price": 7.5,
       "priceMenu": 9,
-      "image": "https://images.unsplash.com/photo-1633321702518-7feccafb94d5?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/le-bacon.jpg",
       "category": "sandwichs",
       "order": 21
     },
@@ -149,7 +149,7 @@
       "desc": "1 steak 45 g, fromage.",
       "price": 4.5,
       "priceMenu": 6,
-      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-cheese.jpg",
       "category": "burgers",
       "order": 101
     },
@@ -159,7 +159,7 @@
       "desc": "2 steaks 45 g, fromage.",
       "price": 5.5,
       "priceMenu": 7,
-      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-double-cheese.jpg",
       "category": "burgers",
       "order": 102
     },
@@ -169,7 +169,7 @@
       "desc": "3 steaks 45 g, fromage.",
       "price": 7,
       "priceMenu": 8.5,
-      "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-triple-cheese.jpg",
       "category": "burgers",
       "order": 103
     },
@@ -179,7 +179,7 @@
       "desc": "2 steaks 45 g, fromage.",
       "price": 6,
       "priceMenu": 7.5,
-      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-big.jpg",
       "category": "burgers",
       "order": 104
     },
@@ -189,7 +189,7 @@
       "desc": "4 steaks 45 g, fromage.",
       "price": 7.5,
       "priceMenu": 9,
-      "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-double-big.png",
       "category": "burgers",
       "order": 105
     },
@@ -209,7 +209,7 @@
       "desc": "2 poulets panés, fromage.",
       "price": 7.5,
       "priceMenu": 9,
-      "image": "https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-double-chicken.jpg",
       "category": "burgers",
       "order": 107
     },
@@ -219,7 +219,7 @@
       "desc": "1 poisson pané, fromage.",
       "price": 6,
       "priceMenu": 7.5,
-      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-fish.jpg",
       "category": "burgers",
       "order": 108
     },
@@ -229,7 +229,7 @@
       "desc": "2 poissons panés, fromage.",
       "price": 7,
       "priceMenu": 8.5,
-      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-double-fish.jpg",
       "category": "burgers",
       "order": 109
     },
@@ -239,7 +239,7 @@
       "desc": "1 steak 90 g, fromage, sauce maison.",
       "price": 6,
       "priceMenu": 7.5,
-      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-big-cheese.jpg",
       "category": "burgers",
       "order": 110
     },
@@ -249,7 +249,7 @@
       "desc": "1 steak 90 g, fromage, galette de pommes de terre.",
       "price": 7,
       "priceMenu": 8.5,
-      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-big-cheese-country.jpg",
       "category": "burgers",
       "order": 111
     },
@@ -259,7 +259,7 @@
       "desc": "1 steak, fromage, bacon, œuf, sauce maison.",
       "price": 8,
       "priceMenu": 9.5,
-      "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-big-bacon.jpg",
       "category": "burgers",
       "order": 112
     },
@@ -269,7 +269,7 @@
       "desc": "Galette de pommes de terre, fromage, tomates confites, champignons.",
       "price": 5.5,
       "priceMenu": 7,
-      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/b-vegetarien.jpg",
       "category": "burgers",
       "tag": "Végé",
       "order": 113
@@ -310,7 +310,7 @@
       "desc": "1 steak 180 g, fromage.",
       "price": 7,
       "priceMenu": 8.5,
-      "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/le-180.jpg",
       "category": "burgers",
       "tag": "180 g",
       "order": 131
@@ -321,7 +321,7 @@
       "desc": "2 steaks 180 g, fromage.",
       "price": 8.5,
       "priceMenu": 10,
-      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/le-360.jpg",
       "category": "burgers",
       "tag": "180 g",
       "order": 132
@@ -332,7 +332,7 @@
       "desc": "3 steaks 180 g, fromage.",
       "price": 10,
       "priceMenu": 11.5,
-      "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/le-540.jpg",
       "category": "burgers",
       "tag": "180 g",
       "order": 133
@@ -343,7 +343,7 @@
       "desc": "1 steak de boucherie 150 g, fromage, sauce maison, frites Steak House.",
       "price": 10,
       "priceMenu": 11.5,
-      "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/g-original.jpg",
       "category": "burgers",
       "tag": "Gourmet",
       "bestseller": true,
@@ -355,7 +355,7 @@
       "desc": "1 steak de boucherie 150 g, fromage à raclette, sauce maison, frites Steak House.",
       "price": 11.9,
       "priceMenu": 13.4,
-      "image": "https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=800&auto=format&fit=crop&q=80",
+      "image": "/plats/g-raclette.jpg",
       "category": "burgers",
       "tag": "Gourmet",
       "order": 142
